@@ -15,7 +15,7 @@
 	<artifactId>sso-auth-app</artifactId>
 	<version>1.0.0</version>
 	<name>sso-auth-app</name>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 	<description>sso-auth-app provides functionality of sso auth provider</description>
 
 	<properties>
@@ -91,6 +91,16 @@
 			<artifactId>jedis</artifactId>
 			<version>3.3.0</version>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
