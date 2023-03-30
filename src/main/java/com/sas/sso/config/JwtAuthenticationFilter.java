@@ -26,6 +26,7 @@ import com.sas.sso.constants.Constant;
 import com.sas.sso.dto.Response;
 import com.sas.sso.exception.ObjectNotFoundException;
 import com.sas.sso.repository.TokenRepository;
+import com.sas.sso.repository.UserRedisRepository;
 import com.sas.sso.service.impl.JwtService;
 
 import io.jsonwebtoken.Claims;
@@ -42,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Con
 	private final JwtService jwtService;
 	private final UserDetailsService userDetailsService;
 	private final TokenRepository tokenRepository;
+	
+	private final UserRedisRepository userRedisRepository;
 
 	private final ObjectMapper mapper;
 

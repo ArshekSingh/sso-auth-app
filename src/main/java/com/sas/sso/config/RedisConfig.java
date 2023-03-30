@@ -21,14 +21,12 @@ public class RedisConfig {
 	private String port;
 
 	@Value("${redis.nodes}")
-	private String nodes;
+	private List<String> nodes;
 
 	@Bean
 	JedisConnectionFactory jedisConnectionFactory() {
-		List<String> nodeList = List.of(nodes.split(","));
 		RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host,
 				Integer.parseInt(port));
-//        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration(nodeList);
 		return new JedisConnectionFactory(redisStandaloneConfiguration);
 	}
 
