@@ -14,10 +14,12 @@ import org.springframework.web.servlet.ModelAndView;
 import com.sas.sso.dto.LoginDTO;
 import com.sas.sso.entity.AppMaster;
 import com.sas.sso.entity.CompanyMaster;
+import com.sas.sso.entity.TokenSession;
 import com.sas.sso.entity.User;
 import com.sas.sso.repository.AppMasterRepository;
 import com.sas.sso.repository.UserRepository;
 import com.sas.sso.service.UserService;
+import com.sas.sso.utils.UserUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,32 +39,50 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	AppMasterRepository appMasterRepository;
 
+	@Autowired
+	UserUtils userUtils;
+
 	@Override
-	public ModelAndView authenticateUser(LoginDTO loginDTO,HttpServletResponse response) {
+	public ModelAndView authenticateUser(LoginDTO loginDTO, HttpServletResponse response) {
 		ModelAndView modelAndView = new ModelAndView();
 		Optional<User> userOptional = userRepository.findByEmailAndCompanyMaster_CompanyCode(loginDTO.getUserName(),
 				loginDTO.getCompanyCode());
 		if (userOptional.isPresent()
 				&& bCryptPasswordEncoder.matches(loginDTO.getPassword(), userOptional.get().getPassword())) {
+
 			User user = userOptional.get();
-			String jwtString = jwtService.generateToken(user);
+			log.info("user with id {} found with supplied credentials", user.getId());
+
 			CompanyMaster companyMaster = user.getCompanyMaster();
 			Optional<AppMaster> appMasterOptional = appMasterRepository
 					.findByApplicationNameAndCompanyId(loginDTO.getAppName(), companyMaster.getCompanyId());
-			AppMaster appMaster = appMasterOptional.get();
-			StringBuilder builder = new StringBuilder();
-			builder.append("redirect:").append("https://dev.aiqahealth.com/enrollment-service/actuator/health").append("?token=".concat(jwtString));
-			modelAndView.setViewName(builder.toString());
-			Cookie cookie=new Cookie("token", jwtString);
-			response.setHeader(HttpHeaders.SET_COOKIE,cookie.toString());
 
-		}
-		else
-		{
+			if (appMasterOptional.isPresent()) {
 
-		modelAndView.setViewName("login");
-		modelAndView.addObject("loginDTO", loginDTO);
-		modelAndView.addObject("error_message", "invalid credentials");
+				userUtils.addUserToSessionCache(user);
+				TokenSession tokenSession = userUtils.addTokenToCache(jwtService.generateToken(user),
+						user.getId().toString());
+				AppMaster appMaster = appMasterOptional.get();
+				StringBuilder builder = new StringBuilder();
+				builder.append("redirect:").append(appMaster.getBaseUrl())
+						.append("?token=".concat(tokenSession.getToken()));
+				modelAndView.setViewName(builder.toString());
+				Cookie cookie = new Cookie("token", tokenSession.getToken());
+				response.setHeader(HttpHeaders.SET_COOKIE, "token=".concat( tokenSession.getToken()).concat("; Path=/; Expires=Thu, 28 Mar 2024 12:14:27 GMT;"));
+				return modelAndView;
+			} else {
+				log.error("user with id {} does not have any company with name {}", user.getId(),
+						loginDTO.getAppName());
+				modelAndView.setViewName("login");
+				modelAndView.addObject("loginDTO", loginDTO);
+				modelAndView.addObject("error_message", "no such app exists for this user");
+			}
+
+		} else {
+			log.error("credentials failed to match with system ");
+			modelAndView.setViewName("login");
+			modelAndView.addObject("loginDTO", loginDTO);
+			modelAndView.addObject("error_message", "invalid credentials");
 		}
 		return modelAndView;
 	}

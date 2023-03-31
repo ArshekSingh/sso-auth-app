@@ -32,10 +32,7 @@ public class LoginController {
 	}
 
 	@PostMapping(value = "auth/login")
-	ModelAndView loginFormPost(@ModelAttribute LoginDTO loginDTO,HttpServletResponse response) {
-
-		ModelAndView modelAndView = userService.authenticateUser(loginDTO,response);
-
-		return modelAndView;
+	ModelAndView loginFormPost(@ModelAttribute LoginDTO loginDTO, HttpServletResponse response) {
+		return userService.authenticateUser(loginDTO, response);
 	}
 }

@@ -1,10 +1,10 @@
 package com.sas.sso.entity;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,16 +18,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@RedisHash(value = "USER_SESSION")
-public class UserSession implements Serializable {
+@RedisHash(value = "TOKEN_SESSION")
+public class TokenSession implements Serializable {
 	private final static long serialVersionUID = -6524768694427900654L;
 
-	private String id;
+	@Id
+	@Indexed
+	private String token;
 
-	private String name;
-
-	private String email;
-
-	private Set<String> roles = new HashSet<>();
+	private String userId;
 
 }

@@ -93,7 +93,9 @@ span.psw {
 	<form:hidden path="appName"/>
     <label for="psw"><b>Password</b></label>
     <form:input type="password" placeholder="Enter Password" path="password" required="true"/>
-        
+   <c:if test="${not empty error_message}">
+    <p style="text-align:center"><strong>${error_message}</strong></p>
+	</c:if>  
     <button type="submit">Login</button>
     
   </div>

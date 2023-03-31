@@ -3,13 +3,23 @@ package com.sas.sso.serviceimpl;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.sas.sso.entity.AppMaster;
 import com.sas.sso.entity.User;
+import com.sas.sso.entity.UserSession;
+import com.sas.sso.repository.AccessGroupRepository;
+import com.sas.sso.repository.AppMasterRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -19,8 +29,19 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
+	
+	@Value("${app.jwt.secretkey}")
+	String secretKey;
 
-	public static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+	@Value("${app.jwt.expiry}")
+	Long expiry;
+	
+	@Autowired
+	AppMasterRepository appMasterRepository;
+
+	@Autowired
+	AccessGroupRepository accessGroupRepository;
+
 
 	public String extractUsername(String token) {
 		return extractClaim(token, Claims::getSubject);
@@ -36,12 +57,36 @@ public class JwtService {
 	}
 
 	public String generateToken(Map<String, Object> extraClaims, User userDetails) {
+		Set<String> apps = setApps(userDetails);
 		return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
 				.setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
+				.setExpiration(new Date(System.currentTimeMillis() + expiry))
 				.signWith(getSignInKey(), SignatureAlgorithm.HS256)
-				.claim("authorities", null/* roleRepository.findAllRolesForUser(userDetails.getId()) */)
+				.claim("authorities", setAuthorities(userDetails, apps)).claim("apps", setApps(userDetails))
 				.claim("company", userDetails.getCompanyMaster()).compact();
+	}
+
+	private Set<String> setApps(User userDetails) {
+		Optional<List<AppMaster>> appMasterOptional = appMasterRepository
+				.findByCompanyId(userDetails.getCompanyMaster().getCompanyId());
+
+		if (appMasterOptional.isPresent()) {
+			return appMasterOptional.get().parallelStream().map(AppMaster::getApplicationName)
+					.collect(Collectors.toSet());
+		}
+		return Set.of();
+	}
+
+	private HashMap<String, Set<String>> setAuthorities(User userDetails, Set<String> apps) {
+
+		HashMap<String, Set<String>> appRoles = new HashMap<>();
+
+		apps.parallelStream().forEach(app -> {
+			appRoles.put(app, accessGroupRepository.findAllRolesOfAppAndCompany(userDetails.getId(), app));
+
+		});
+
+		return appRoles;
 	}
 
 	public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -62,6 +107,11 @@ public class JwtService {
 	}
 
 	private Key getSignInKey() {
-		return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
+		return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+	}
+
+	public boolean isTokenValid(String token, UserSession userSession) {
+		final String username = extractUsername(token);
+		return (username.equals(userSession.getEmail())) && !isTokenExpired(token);
 	}
 }
