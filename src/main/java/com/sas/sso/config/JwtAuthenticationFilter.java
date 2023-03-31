@@ -25,9 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sas.sso.constants.Constant;
 import com.sas.sso.dto.Response;
 import com.sas.sso.exception.ObjectNotFoundException;
-import com.sas.sso.repository.TokenRepository;
 import com.sas.sso.repository.UserRedisRepository;
-import com.sas.sso.service.impl.JwtService;
+import com.sas.sso.serviceimpl.JwtService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -42,7 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Con
 
 	private final JwtService jwtService;
 	private final UserDetailsService userDetailsService;
-	private final TokenRepository tokenRepository;
 	
 	private final UserRedisRepository userRedisRepository;
 
@@ -64,8 +62,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Con
 			userEmail = jwtService.extractUsername(token);
 			if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 				UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-				boolean isTokenValid = tokenRepository.findByToken(token).map(t -> !t.isExpired() && !t.isRevoked())
-						.orElse(false);
+				boolean isTokenValid = true;/*tokenRepository.findByToken(token).map(t -> !t.isExpired() && !t.isRevoked())
+						.orElse(false);*/
 				if (jwtService.isTokenValid(token, userDetails) && isTokenValid) {
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
 							null, userDetails.getAuthorities());

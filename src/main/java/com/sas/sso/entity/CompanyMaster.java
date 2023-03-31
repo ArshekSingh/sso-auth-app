@@ -11,27 +11,24 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "access_groups")
-public class AccessGroup extends Auditable<Long> {
+@Table(name = "company_master")
+public class CompanyMaster extends Auditable<Long> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "access_group_id")
-	private Long id;
+	@Column(name = "comp_id")
+	private Long companyId;
 
-	@Column(name = "access_group_no")
-	private String accessGroupNo;
+	@Column(name = "comp_name")
+	private String companyName;
 
-	@Column(name = "name", unique = true)
-	private String name;
+	@Column(name = "comp_code", unique = true)
+	private String companyCode;
 
-	@Column(name = "description")
-	private String description;
+	@Column(name = "website_url")
+	private String websiteUrl;
 
 	@Column(name = "active")
 	private boolean active;
-
-	@Column(name = "editable")
-	private Integer editable;
 
 }

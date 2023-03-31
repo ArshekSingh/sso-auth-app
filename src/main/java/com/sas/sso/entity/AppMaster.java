@@ -11,17 +11,24 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "role")
-public class Role {
+@Table(name = "app_master")
+public class AppMaster extends Auditable<Long> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "role_id")
+	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "role", unique = true, nullable = false)
-	private String role;
+	@Column(name = "comp_id")
+	private Long companyId;
 
-	@Column(name = "role_group", nullable = false)
-	private String roleGroup;
+	@Column(name = "app_name", unique = true)
+	private String applicationName;
+
+	@Column(name = "base_url")
+	private String baseUrl;
+
+	@Column(name = "active")
+	private boolean active;
+
 }

@@ -85,8 +85,11 @@ span.psw {
   </div>
 
   <div class="container">
+  <label for="uname"><b>Company Code</b></label>
+    <form:input type="text" placeholder="Enter Company Code" path="companyCode" required="true" />
     <label for="uname"><b>Username</b></label>
     <form:input type="text" placeholder="Enter Username" path="userName" required="true" />
+    
 	<form:hidden path="appName"/>
     <label for="psw"><b>Password</b></label>
     <form:input type="password" placeholder="Enter Password" path="password" required="true"/>
