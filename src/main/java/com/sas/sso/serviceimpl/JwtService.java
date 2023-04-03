@@ -62,10 +62,24 @@ public class JwtService {
 				.setIssuedAt(new Date(System.currentTimeMillis()))
 				.setExpiration(new Date(System.currentTimeMillis() + expiry))
 				.signWith(getSignInKey(), SignatureAlgorithm.HS256)
-				.claim("authorities", setAuthorities(userDetails, apps)).claim("apps", setApps(userDetails))
+				.claim("authorities", setAuthorities(userDetails, apps)).claim("apps", setApps(userDetails)).claim("appInfo", setAppInfos(userDetails))
 				.claim("company", userDetails.getCompanyMaster()).compact();
 	}
 
+	private HashMap<String, AppMaster> setAppInfos(User userDetails) {
+
+		HashMap<String, AppMaster> appInfos = new HashMap<>();
+		Optional<List<AppMaster>> appMasterOptional = appMasterRepository
+				.findByCompanyId(userDetails.getCompanyMaster().getCompanyId());
+
+		if (appMasterOptional.isPresent()) {
+			appMasterOptional.get().parallelStream().forEach(app -> {
+				appInfos.put(app.getApplicationName(), app);
+
+			});
+		}
+		return appInfos;
+	}
 	private Set<String> setApps(User userDetails) {
 		Optional<List<AppMaster>> appMasterOptional = appMasterRepository
 				.findByCompanyId(userDetails.getCompanyMaster().getCompanyId());

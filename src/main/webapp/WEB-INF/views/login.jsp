@@ -81,7 +81,7 @@ span.psw {
 
 <form:form class="form" method="POST" action="${context}/auth/login" modelAttribute="loginDTO">
   <div class="imgcontainer">
-    <img src="img_avatar2.png" alt="Avatar" class="avatar">
+    <img src="https://static.wixstatic.com/media/bd2c79_0c5dd9ff…m_0.66_1.00_0.01,enc_auto/SAS_Techstudio_Logo.png" alt="Sas TechStudio" class="avatar">
   </div>
 
   <div class="container">

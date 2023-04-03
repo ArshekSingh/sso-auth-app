@@ -1,8 +1,11 @@
 package com.sas.sso.serviceimpl;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
+import java.util.SimpleTimeZone;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+
+	private static final int ONE_DAY_IN_SECONDS = 86400;
 
 	@Autowired
 	UserRepository userRepository;
@@ -67,24 +72,35 @@ public class UserServiceImpl implements UserService {
 				builder.append("redirect:").append(appMaster.getBaseUrl())
 						.append("?token=".concat(tokenSession.getToken()));
 				modelAndView.setViewName(builder.toString());
-				Cookie cookie = new Cookie("token", tokenSession.getToken());
-				response.setHeader(HttpHeaders.SET_COOKIE, "token=".concat( tokenSession.getToken()).concat("; Path=/; Expires=Thu, 28 Mar 2024 12:14:27 GMT;"));
+
+				setCookie(response, tokenSession);
 				return modelAndView;
 			} else {
 				log.error("user with id {} does not have any company with name {}", user.getId(),
 						loginDTO.getAppName());
-				modelAndView.setViewName("login");
+				modelAndView.setViewName("Login_v1/index");
 				modelAndView.addObject("loginDTO", loginDTO);
-				modelAndView.addObject("error_message", "no such app exists for this user");
+				modelAndView.addObject("error_message", "App Does not exist in system");
 			}
 
 		} else {
 			log.error("credentials failed to match with system ");
-			modelAndView.setViewName("login");
+			modelAndView.setViewName("Login_v1/index");
 			modelAndView.addObject("loginDTO", loginDTO);
-			modelAndView.addObject("error_message", "invalid credentials");
+			modelAndView.addObject("error_message", "Invalid Credentials");
 		}
 		return modelAndView;
+	}
+
+	private void setCookie(HttpServletResponse response, TokenSession tokenSession) {
+		//Tue, 04-Apr-2023 10:15:01 GMT
+		SimpleDateFormat cookieExpireFormat = new SimpleDateFormat("EEE, dd-MMM-yyyy HH:mm:ss zzz");
+		cookieExpireFormat.setTimeZone(new SimpleTimeZone(0, "GMT"));
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.SECOND, ONE_DAY_IN_SECONDS);
+		String cookieLifeTime = cookieExpireFormat.format(cal.getTime());
+		response.setHeader(HttpHeaders.SET_COOKIE,
+				"token=".concat(tokenSession.getToken()).concat("; Path=/; Expires=" + cookieLifeTime + ";"));
 	}
 
 }

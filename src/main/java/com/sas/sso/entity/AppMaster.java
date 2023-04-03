@@ -31,4 +31,7 @@ public class AppMaster extends Auditable<Long> {
 	@Column(name = "active")
 	private boolean active;
 
+	@Column(name = "logo_url")
+	private String logoUrl;
+
 }
