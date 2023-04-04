@@ -21,9 +21,9 @@ public interface AccessGroupRepository extends PagingAndSortingRepository<Access
 
 	List<AccessGroup> findAllByOrderByCreatedDateDesc();
 
-	List<AccessGroup> findByActiveAndCopmId(int active,Long copmId);
+	List<AccessGroup> findByActiveAndCompId(int active,Long copmId);
 
-	Page<AccessGroup> findByCopmId(Long copmId , Pageable pageable);
+	Page<AccessGroup> findByCompId(Long compId , Pageable pageable);
 
 	boolean existsByName(String name);
 

@@ -10,21 +10,18 @@ import javax.validation.Valid;
 @Service
 public interface AccessGroupService {
 
-    Response findAll(int pageNo, int pageSize);
+	Response findAll(int pageNo, int pageSize);
 
-    Response addNewAccessGroup(AccessGroupDTO dto);
+	Response addNewAccessGroup(AccessGroupDTO dto);
 
-    Response updateAccessGroup(AccessGroupDTO dto);
+	Response updateAccessGroup(AccessGroupDTO dto);
 
-    Response updateUserAccessGroup(@Valid UserAccessGroupDTO userAccessGroupDTO);
+	Response updateUserAccessGroup(@Valid UserAccessGroupDTO userAccessGroupDTO);
 
-    Response getUserAccessGroups(Long userId);
+	Response getUserAccessGroups(Long userId);
 
-    Response getCompanyDetails();
+	Response getCompanyDetails();
 
-    Response getAppDetails(Long compId);
+	Response getAppDetails(Long compId);
 
-    Response getRoleGroups();
-
-    Response getAllRolesForAccessGroup(Long accessGroupId);
 }

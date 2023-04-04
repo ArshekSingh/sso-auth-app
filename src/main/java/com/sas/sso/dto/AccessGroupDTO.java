@@ -3,7 +3,10 @@ package com.sas.sso.dto;
 import lombok.Data;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,14 +24,20 @@ public class AccessGroupDTO {
     @NotEmpty
     Set<RoleDTO> roles = new HashSet<>();
 
-    @NotEmpty
-    Boolean active;
+    
+    boolean active;
     HashMap<String, Set<RoleDTO>> groupRoles = new HashMap<>();
-    @NotEmpty
-    private Long copmId;
+    
+    @NotNull
+    @Min(value = 1)
+    private Long compId;
+    
     private String companyName;
-    @NotEmpty
+
+    @NotNull
+    @Min(value = 1)
     private Long appId;
+    
     private String appName;
     private String description;
 

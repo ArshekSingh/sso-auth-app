@@ -1,30 +1,36 @@
 package com.sas.sso.entity;
 
-import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import lombok.Data;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
-import java.time.LocalDateTime;
-import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Data
-@Table(name = "access_groups")
-public class AccessGroup extends Auditable<Long> {
+@Getter
+@Setter
+@Table(name = "access_group")
+public class AccessGroup extends Auditable<String> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "access_group_id")
+	@Column(name = "id")
 	private Long id;
 
-	@Column(name="comp_id")
-	private Long copmId;
+	@Column(name = "comp_id")
+	private Long compId;
 
-	@Column(name="app_id")
+	@Column(name = "app_id")
 	private Long appId;
 
 	@Column(name = "access_group_no")
@@ -42,8 +48,7 @@ public class AccessGroup extends Auditable<Long> {
 	@Column(name = "editable")
 	private Integer editable;
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "access_group_role", joinColumns = @JoinColumn(name = "access_group_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-	private Set<Role> roles;
-
+	@OneToMany(mappedBy ="accessGroup",cascade = CascadeType.ALL,fetch=FetchType.LAZY,orphanRemoval=true)
+	private List<AccessGroupRoles> accessGroupRoles=new ArrayList();
+	
 }
