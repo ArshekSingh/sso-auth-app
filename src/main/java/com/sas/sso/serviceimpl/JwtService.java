@@ -20,6 +20,7 @@ import com.sas.sso.entity.User;
 import com.sas.sso.entity.UserSession;
 import com.sas.sso.repository.AccessGroupRepository;
 import com.sas.sso.repository.AppMasterRepository;
+import com.sas.sso.utils.CipherUtils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -41,6 +42,9 @@ public class JwtService {
 
 	@Autowired
 	AccessGroupRepository accessGroupRepository;
+	
+	@Autowired
+	CipherUtils cipherUtils;
 
 
 	public String extractUsername(String token) {
@@ -62,8 +66,9 @@ public class JwtService {
 				.setIssuedAt(new Date(System.currentTimeMillis()))
 				.setExpiration(new Date(System.currentTimeMillis() + expiry))
 				.signWith(getSignInKey(), SignatureAlgorithm.HS256)
-				.claim("authorities", setAuthorities(userDetails, apps)).claim("apps", setApps(userDetails)).claim("appInfo", setAppInfos(userDetails))
-				.claim("company", userDetails.getCompanyMaster()).compact();
+				.claim("authorities", setAuthorities(userDetails, apps)).claim("apps", setApps(userDetails))
+				.claim("appInfo", setAppInfos(userDetails)).claim("company", userDetails.getCompanyMaster())
+				.claim("tenantId", cipherUtils.encrypt(userDetails.getCompanyMaster().getCompanyCode())).compact();
 	}
 
 	private HashMap<String, AppMaster> setAppInfos(User userDetails) {

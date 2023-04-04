@@ -1,5 +1,7 @@
 package com.sas.sso.controller;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +22,18 @@ public class LoginController {
 	UserService userService;
 
 	@GetMapping(value = "auth/login")
-	ModelAndView loginForm(@RequestParam(required = true) String appName) {
+	ModelAndView loginForm(@RequestParam(required = true) String appName,HttpServletRequest httpServletRequest,HttpServletResponse httpServletResponse) {
 
+		if(httpServletRequest.getCookies()!=null && httpServletRequest.getCookies().length>0)
+		{
+			for (Cookie cookie: httpServletRequest.getCookies()) {
+				if(cookie.getName().equals("token")) {
+					
+					return userService.redirectAuthenticatedUser(appName,cookie.getValue(), httpServletResponse);
+					
+				}
+			}
+		}
 		ModelAndView modelAndView = new ModelAndView();
 
 		modelAndView.setViewName("Login_v1/index");

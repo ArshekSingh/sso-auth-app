@@ -10,4 +10,5 @@ public interface UserService {
 
 	
 	ModelAndView authenticateUser(LoginDTO loginDTO,HttpServletResponse response);
+	ModelAndView redirectAuthenticatedUser(String token,String string, HttpServletResponse response);
 }
