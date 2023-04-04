@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
 				userUtils.addUserToSessionCache(user);
 				TokenSession tokenSession = userUtils.addTokenToCache(jwtService.generateToken(user),
-						user.getId().toString());
+						user);
 				AppMaster appMaster = appMasterOptional.get();
 				StringBuilder builder = new StringBuilder();
 				builder.append("redirect:").append(appMaster.getBaseUrl())

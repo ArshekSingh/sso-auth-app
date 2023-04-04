@@ -2,9 +2,15 @@ package com.sas.sso.utils;
 
 import java.util.Optional;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.sas.sso.entity.TokenSession;
 import com.sas.sso.entity.User;
@@ -70,10 +76,12 @@ public class UserUtils {
 		return userRedisRepository.findById(id);
 	}
 
-	public TokenSession addTokenToCache(String token, String userId) {
+	public TokenSession addTokenToCache(String token, User user) {
 		TokenSession tokenSession = new TokenSession();
 		tokenSession.setToken(token);
-		tokenSession.setUserId(userId);
+		tokenSession.setUserId(user.getId().toString());
+		tokenSession.setCompanyId(user.getCompanyMaster().getCompanyId().toString());
+		tokenSession.setCompanyCode(user.getCompanyMaster().getCompanyCode());
 		return tokenRedisRepository.save(tokenSession);
 	}
 
@@ -87,4 +95,41 @@ public class UserUtils {
 
 		}
 	}
+	
+	public Optional<String> getAuthTokenFromRequest() {
+		HttpServletRequest httpServletRequest = null;
+		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+		if (requestAttributes instanceof ServletRequestAttributes) {
+			httpServletRequest = ((ServletRequestAttributes) requestAttributes).getRequest();
+
+		}
+
+		if (httpServletRequest != null && httpServletRequest.getCookies() != null
+				&& httpServletRequest.getCookies().length > 0) {
+			for (Cookie cookie : httpServletRequest.getCookies()) {
+				if (cookie.getName().equals("token")) {
+
+					return Optional.of(cookie.getValue());
+
+				}
+			}
+		}
+		return Optional.empty();
+	}
+	
+	public TokenSession getTokenSession() {
+		try {
+			Optional<String> jwtToken = getAuthTokenFromRequest();
+			Optional<TokenSession> tokenSession = tokenRedisRepository.findByToken(jwtToken.get());
+			if (tokenSession.isPresent()) {
+				return tokenSession.get();
+			} else {
+				return null;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			return null;
+		}
+	}
+
 }

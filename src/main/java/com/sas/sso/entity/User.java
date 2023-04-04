@@ -50,6 +50,9 @@ public class User extends Auditable<Long> implements UserDetails {
 	@Column(name = "password")
 	private String password;
 
+	@Column(name="comp_id")
+	private Long companyId;
+
 	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "user_access_group", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "access_group_id"))
 	private Set<AccessGroup> accessGroups;
@@ -57,6 +60,7 @@ public class User extends Auditable<Long> implements UserDetails {
 	@OneToOne
 	@JoinColumn(name = "comp_id")
 	private CompanyMaster companyMaster;
+
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

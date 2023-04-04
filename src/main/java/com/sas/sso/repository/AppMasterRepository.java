@@ -13,4 +13,6 @@ public interface AppMasterRepository extends JpaRepository<AppMaster, Long> {
 	Optional<AppMaster> findByApplicationNameAndCompanyId(String applicationName, Long companyId);
 	
 	Optional<List<AppMaster>> findByCompanyId(Long companyId);
+	
+	Optional<List<AppMaster>> findByCompanyIdAndActive(Long companyId,Boolean active);
 }

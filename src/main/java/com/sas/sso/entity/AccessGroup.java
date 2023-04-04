@@ -1,13 +1,15 @@
 package com.sas.sso.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.Data;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+
+import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Data
@@ -18,6 +20,12 @@ public class AccessGroup extends Auditable<Long> {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "access_group_id")
 	private Long id;
+
+	@Column(name="comp_id")
+	private Long copmId;
+
+	@Column(name="app_id")
+	private Long appId;
 
 	@Column(name = "access_group_no")
 	private String accessGroupNo;
@@ -33,5 +41,9 @@ public class AccessGroup extends Auditable<Long> {
 
 	@Column(name = "editable")
 	private Integer editable;
+
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "access_group_role", joinColumns = @JoinColumn(name = "access_group_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+	private Set<Role> roles;
 
 }
