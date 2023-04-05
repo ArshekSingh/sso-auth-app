@@ -36,7 +36,7 @@ public class LoginController {
 		}
 		ModelAndView modelAndView = new ModelAndView();
 
-		modelAndView.setViewName("Login_v1/index");
+		modelAndView.setViewName("login");
 		LoginDTO loginDTO = new LoginDTO();
 		loginDTO.setAppName(appName);
 		modelAndView.addObject("loginDTO", loginDTO);

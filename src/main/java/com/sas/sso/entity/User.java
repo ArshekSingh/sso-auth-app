@@ -50,6 +50,15 @@ public class User extends Auditable<Long> implements UserDetails {
 	@Column(name = "password")
 	private String password;
 
+	@Column(name = "mobile")
+	private String mobile;
+
+	@Column(name = "is_password_active")
+	private String isPasswordActive;
+
+	@Column(name = "is_otp_validated")
+	private String isOtpValidated;
+
 	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "user_access_group", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "access_group_id"))
 	private Set<AccessGroup> accessGroups;
