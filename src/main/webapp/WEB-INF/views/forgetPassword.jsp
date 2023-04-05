@@ -43,7 +43,7 @@
 					<img style="height:75%" src="https://static.wixstatic.com/media/bd2c79_0c5dd9ffd2fd4f3eaeeba6aa250b7ebf~mv2.png/v1/fill/w_106,h_113,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/SAS_Techstudio_Logo.png" alt="IMG">
 				</div>
 
-				<form:form id="forget-form" class="forget100-form validate-form" method="POST" action="${context}/auth/forgetPassword" modelAttribute="forgetDTO">
+				<form:form id="forget-form" class="forget100-form validate-form" method="POST" action="${context}/auth/forgetPassword" modelAttribute="forgetPasswordDTO">
 
 					<span class="forget100-form-title">
 						Forget
@@ -54,6 +54,11 @@
 						<span class="symbol-input100">
 							<i class="fa fa-building" aria-hidden="true"></i>
 						</span>
+						 <c:if test="${not empty error_message_company_code}">
+                        					 	<br>
+                            					<p style="text-align:center"><strong>${error_message_company_code}</strong></p>
+                            					<br>
+                        					  </c:if>
 					</div>
 					<div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
 						<form:input class="input100" type="email"  path="userName"  placeholder="Enter Email" required="true" />
@@ -61,6 +66,11 @@
 						<span class="symbol-input100">
 							<i class="fa fa-envelope" aria-hidden="true"></i>
 						</span>
+						<c:if test="${not empty error_message_user_name}">
+                                                					 	<br>
+                                                    					<p style="text-align:center"><strong>${error_message_user_name}</strong></p>
+                                                    					<br>
+                                                					  </c:if>
 					</div>
 
 					<div class="container-forget100-form-btn">
@@ -73,6 +83,11 @@
     					<p style="text-align:center"><strong>${error_message}</strong></p>
     					<br>
 					  </c:if>
+					  <c:if test="${not empty success_message}">
+                      					 	<br>
+                          					<p style="text-align:center"><strong>${success_message}</strong></p>
+                          					<br>
+                      					  </c:if>
 					</div>
 
 				</form:form>

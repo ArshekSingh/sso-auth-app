@@ -1,5 +1,6 @@
 package com.sas.sso.controller;
 
+import com.sas.sso.dto.ForgetPasswordDto;
 import com.sas.sso.dto.Response;
 import com.sas.sso.exception.BadRequestException;
 import com.sas.sso.exception.InternalServerErrorException;
@@ -27,29 +28,29 @@ public class PasswordManagementController {
     private PasswordService passwordService;
 
     @PostMapping("/forgetPassword")
-    public ModelAndView forgetPassword(@RequestParam String userName, @RequestParam String companyCode) throws InternalServerErrorException {
-        log.info("Request initiated to forget password for email id {} and company code {}", userName, companyCode);
-        return passwordService.forgetPassword(userName, companyCode);
+    public ModelAndView forgetPassword(@RequestBody ForgetPasswordDto forgetPasswordDto) throws InternalServerErrorException {
+        log.info("Request initiated to forget password for email id {} and company code {}", forgetPasswordDto.getUserName(), forgetPasswordDto.getCompanyCode());
+        return passwordService.forgetPassword(forgetPasswordDto);
     }
 
-    @PostMapping("/verifyOtp")
-    public Response verifyOtp(@RequestParam String email, @RequestParam String otp) {
-        log.info("Request initiated to verify OTP for user {}", email);
-        return passwordService.verifyOtp(email, otp);
-    }
-
-    @PostMapping("/updatePassword")
-    public Response createNewPassword(@Valid @RequestBody CreateNewPasswordRequest createNewPasswordRequest) throws BadRequestException {
-        log.info("Request initiated to updatePassword for userId : {}", createNewPasswordRequest.getUserId());
-        return passwordService.updatePassword(createNewPasswordRequest);
-    }
-
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PostMapping("/api/resetPassword")
-    public Response resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpServletRequest) {
-        log.info("resetPassword request received , userId : {} ", request.getEmail());
-        return passwordService.resetPassword(request, httpServletRequest);
-    }
+//    @PostMapping("/verifyOtp")
+//    public Response verifyOtp(@RequestParam String email, @RequestParam String otp) {
+//        log.info("Request initiated to verify OTP for user {}", email);
+//        return passwordService.verifyOtp(email, otp);
+//    }
+//
+//    @PostMapping("/updatePassword")
+//    public Response createNewPassword(@Valid @RequestBody CreateNewPasswordRequest createNewPasswordRequest) throws BadRequestException {
+//        log.info("Request initiated to updatePassword for userId : {}", createNewPasswordRequest.getUserId());
+//        return passwordService.updatePassword(createNewPasswordRequest);
+//    }
+//
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+//    @PostMapping("/api/resetPassword")
+//    public Response resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpServletRequest) {
+//        log.info("resetPassword request received , userId : {} ", request.getEmail());
+//        return passwordService.resetPassword(request, httpServletRequest);
+//    }
 
 //    @PostMapping("/api/changePassword")
 //    public Response changePassword(HttpServletRequest httpServletRequest, @RequestBody ChangePasswordRequest request) throws ObjectNotFoundException, BadRequestException {

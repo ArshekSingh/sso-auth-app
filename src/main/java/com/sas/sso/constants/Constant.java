@@ -9,5 +9,6 @@ public interface Constant {
     String AUTHENTICATION_FAILED = "Authentication Failed";
     String INVALID_TENANT_IDENTIFIER = "Invalid tenant identifier";
     String INVALID_USERNAME_PASSWORD = "Invalid username/password";
+    String OTP_SUBJECT = "Otp to reset your password";
 
 }

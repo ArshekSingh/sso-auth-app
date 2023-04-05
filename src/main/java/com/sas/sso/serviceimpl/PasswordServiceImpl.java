@@ -1,9 +1,12 @@
 package com.sas.sso.serviceimpl;
 
 
+import com.sas.sso.components.EmailProperties;
 import com.sas.sso.components.SmsProperties;
 import com.sas.sso.constants.Constant;
 import com.sas.sso.constants.RestMappingConstants;
+import com.sas.sso.dto.ForgetPasswordDto;
+import com.sas.sso.dto.LoginDTO;
 import com.sas.sso.dto.Response;
 import com.sas.sso.entity.User;
 import com.sas.sso.entity.UserSession;
@@ -30,10 +33,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 
 @Service
@@ -46,126 +56,200 @@ public class PasswordServiceImpl implements PasswordService, Constant {
     private final VendorSmsLogRepository vendorSmsLogRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailProperties emailProperties;
 
     @Override
-    public ModelAndView forgetPassword(String userName, String companyCode) throws InternalServerErrorException {
-        if (!StringUtils.hasText(userName)) {
+    public ModelAndView forgetPassword(ForgetPasswordDto forgetPasswordDto) throws InternalServerErrorException {
+        ModelAndView modelAndView = new ModelAndView();
+        boolean isValid = true;
+        if (!StringUtils.hasText(forgetPasswordDto.getUserName())) {
             log.warn("Email id cannot be empty");
-            return new Response("Email id cannot be empty", HttpStatus.BAD_REQUEST);
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.addObject("error_message_user_name", "userName cannot be empty");
+            return modelAndView;
         }
-        if(!StringUtils.hasText(companyCode)) {
+        if (!StringUtils.hasText(forgetPasswordDto.getCompanyCode())) {
             log.warn("Company code cannot be empty");
-            return new Response("Company code cannot be empty", HttpStatus.BAD_REQUEST);
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.addObject("error_message_company_code", "Company code cannot be empty");
+            return modelAndView;
         }
         String otp = RandomStringUtils.randomNumeric(6);
         String message = "Use OTP " + otp + " to reset your SVCL-FINNCUB password. Do not share the OTP or your number with anyone-SV Creditline Ltd";
-        User user = getUser(userName);
+        User user = getUser(forgetPasswordDto.getUserName(), forgetPasswordDto.getCompanyCode());
         if (user == null) {
-            log.error("No user details found against email id {}", userName);
-            return new Response(NOT_FOUND, HttpStatus.NOT_FOUND);
+            log.error("No user details found against email id {}", forgetPasswordDto.getUserName());
+            ForgetPasswordDto forgetDto = new ForgetPasswordDto();
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.addObject("forgetPasswordDto", forgetDto);
+            modelAndView.addObject("error_message", "No user details found");
         }
-        if (!StringUtils.hasText(user.getMobile())) {
-            log.error("Mobile is not mapped with the email {}", userName);
-            return new Response("Mobile is not mapped with the email " + userName, HttpStatus.NOT_FOUND);
+        else if (!StringUtils.hasText(user.getMobile())) {
+            log.error("Mobile is not mapped with the email {}", forgetPasswordDto.getUserName());
+            ForgetPasswordDto forgetDto = new ForgetPasswordDto();
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.addObject("forgetPasswordDto", forgetDto);
+            modelAndView.addObject("error_message", "Mobile is not mapped with the email");
         }
-        getVendorSmsLog(otp, message, user);
-        log.info("Otp sent to the registered mobile number {}", otp);
-        return new Response("Otp sent to the registered mobile number", HttpStatus.OK);
-
-    }
-
-    @Override
-    @Transactional
-    public Response verifyOtp(String email, String otp) {
-        if (!StringUtils.hasText(email) || !StringUtils.hasText(otp)) {
-            log.error("OTP cannot be empty.");
-            return new Response("OTP cannot be empty", HttpStatus.BAD_REQUEST);
-        }
-        // first check data is available in database
-        User user = getUser(email);
-        if (user == null) {
-            log.error("User details not found for user id {}", email);
-            return new Response("User details not found for user id {}" + email, HttpStatus.NOT_FOUND);
-        }
-        Optional<VendorSmsLog> vendorSmsLog = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "D", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
-        // otp check
-        if (vendorSmsLog.isPresent() && otp.equalsIgnoreCase(vendorSmsLog.get().getSmsOtp())) {
-            vendorSmsLog.get().setStatus("U");    // U is for USED status
-            vendorSmsLog.get().setModifiedBy(email);
-            vendorSmsLog.get().setModifiedOn(LocalDateTime.now());
-            vendorSmsLogRepository.save(vendorSmsLog.get());
-            user.setIsOtpValidated("Y");
-            userRepository.save(user);
-            log.info("OTP verified successfully for userId {}", email);
-            return new Response("OTP verified successfully", HttpStatus.OK);
-        } else {
-            log.error("Invalid Otp is entered by the user {}", email);
-            return new Response("Invalid Otp entered by the user " + email, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Override
-    @Transactional
-    public Response updatePassword(CreateNewPasswordRequest createNewPasswordRequest) throws BadRequestException {
-        if (!createNewPasswordRequest.getNewPassword().equals(createNewPasswordRequest.getConfirmPassword())) {
-            log.error("New password is not same as confirm password for userId : {} ", createNewPasswordRequest.getUserId());
-            throw new BadRequestException("New password is not same as confirm password ", HttpStatus.BAD_REQUEST);
-        }
-        if (createNewPasswordRequest.getNewPassword().length() < 5) {
-            log.error("Minimum length of new password should be at least 5 characters");
-            throw new BadRequestException("Minimum length of new password should be at least 5 characters", HttpStatus.BAD_REQUEST);
-        }
-        User user = getUser(createNewPasswordRequest.getUserId());
-        if (user == null) {
-            return new Response("No user detail found against email id " + createNewPasswordRequest.getUserId(), HttpStatus.NOT_FOUND);
-        }
-        Optional<VendorSmsLog> vendorSmsLog = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "U", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
-        if (vendorSmsLog.isPresent() && createNewPasswordRequest.getOtp().equalsIgnoreCase(vendorSmsLog.get().getSmsOtp())) {
-            user.setPassword(passwordEncoder.encode(createNewPasswordRequest.getNewPassword()));
-            user.setIsPasswordActive("Y");
-            vendorSmsLog.get().setStatus("E");
-            vendorSmsLogRepository.save(vendorSmsLog.get());
-            user.setUpdatedOn(new Date());
-            user.setUpdatedBy(Long.valueOf(createNewPasswordRequest.getUserId()));
-            userRepository.save(user);
-            log.info("Password reset was successful, userId : {}", createNewPasswordRequest.getUserId());
-            return new Response("Password reset was successful", HttpStatus.OK);
-        } else {
-            log.error("Otp is not verified.");
-            return new Response("Otp is not verified.", HttpStatus.BAD_REQUEST);
-        }
-
-    }
-
-    @Override
-    @Transactional
-    public Response resetPassword(ResetPasswordRequest request, HttpServletRequest httpServletRequest) {
-        Response response = new Response();
-        //Logged in admin details
-        String authorization = httpServletRequest.getHeader("Authorization");
-        String jwtToken = authorization.substring(7);
-        String adminEmail = jwtService.extractUsername(jwtToken);
-        if (!adminEmail.isEmpty()) {
-            log.info("Fetching user for resetPassword request, userId : {} ", request.getEmail());
-            User user = getUser(request.getEmail());
-            if (user == null) {
-                log.error("User not found with email id {}", request.getEmail());
-                return new Response("User not found with email id " + request.getEmail(), HttpStatus.NOT_FOUND);
+        else {
+            getVendorSmsLog(otp, message, user);
+            ModelAndView sendOtpOnMail = sendOtpOnMail(otp, message, user);
+            if(sendOtpOnMail.getStatus() != null && sendOtpOnMail.getStatus().is2xxSuccessful()) {
+                log.info("Otp sent to the registered mobile number {}", otp);
+                modelAndView.setViewName("forgetPassword");
+                modelAndView.addObject("success_message", "Otp sent to the registered mobile number");
             }
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-            user.setIsPasswordActive("Y");
-            user.setUpdatedOn(new Date());
-            user.setUpdatedBy(Long.valueOf(adminEmail));
-            userRepository.save(user);
-            log.info("Password reset was successful, userId : {}", request.getEmail());
-            response.setCode(HttpStatus.OK.value());
-            response.setStatus(HttpStatus.OK);
-            response.setMessage("Password changed successfully");
-            return response;
+            else {
+                modelAndView.setViewName("forgetPassword");
+                modelAndView.addObject("error_message", "Email not sent");
+            }
         }
-        log.error("Invalid token details");
-        return new Response("INVALID_TOKEN", HttpStatus.BAD_REQUEST);
+        return modelAndView;
     }
+
+    private ModelAndView sendOtpOnMail(String otp, String message, User user) {
+        Properties properties = getProperties();
+        //Step 1: to get the session object..
+        Session session = getSession(properties);
+        //Step 2 : compose the message [text,multi media]
+        MimeMessage m = new MimeMessage(session);
+        Multipart multiPart = new MimeMultipart();
+        ModelAndView modelAndView = new ModelAndView();
+        try {
+            m.setFrom(emailProperties.getSender());
+            m.setRecipients(Message.RecipientType.TO, InternetAddress.parse(user.getEmail()));
+            m.setSubject(OTP_SUBJECT);
+            BodyPart messageBodyPart = new MimeBodyPart();
+            messageBodyPart.setText(message);
+            multiPart.addBodyPart(messageBodyPart);
+            //Step 3 : send the message using Transport class
+            m.setContent(multiPart);
+            Transport.send(m);
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.setStatus(HttpStatus.OK);
+        } catch (Exception exception) {
+            log.info("exception occurred due to {}", exception.getMessage());
+            ForgetPasswordDto forgetDto = new ForgetPasswordDto();
+            modelAndView.setViewName("forgetPassword");
+            modelAndView.addObject("forgetPasswordDto", forgetDto);
+            modelAndView.addObject("error_message", "Exception occurred due to " + exception.getMessage());
+        }
+        return modelAndView;
+    }
+
+    public Properties getProperties() {
+        //get the system properties
+        Properties properties = System.getProperties();
+        properties.put("mail.smtp.host", emailProperties.getHost());
+        properties.put("mail.smtp.port", emailProperties.getPort());
+        properties.put("mail.smtp.ssl.enable", emailProperties.getEnable());
+        properties.put("mail.smtp.auth", emailProperties.getAuth());
+        return properties;
+    }
+
+    private Session getSession(Properties properties) {
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(emailProperties.getSender(), emailProperties.getPassword());
+            }
+        });
+        session.setDebug(true);
+        return session;
+    }
+
+//    @Override
+//    @Transactional
+//    public Response verifyOtp(String email, String otp) {
+//        if (!StringUtils.hasText(email) || !StringUtils.hasText(otp)) {
+//            log.error("OTP cannot be empty.");
+//            return new Response("OTP cannot be empty", HttpStatus.BAD_REQUEST);
+//        }
+//        // first check data is available in database
+//        User user = getUser(email);
+//        if (user == null) {
+//            log.error("User details not found for user id {}", email);
+//            return new Response("User details not found for user id {}" + email, HttpStatus.NOT_FOUND);
+//        }
+//        Optional<VendorSmsLog> vendorSmsLog = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "D", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
+//        // otp check
+//        if (vendorSmsLog.isPresent() && otp.equalsIgnoreCase(vendorSmsLog.get().getSmsOtp())) {
+//            vendorSmsLog.get().setStatus("U");    // U is for USED status
+//            vendorSmsLog.get().setModifiedBy(email);
+//            vendorSmsLog.get().setModifiedOn(LocalDateTime.now());
+//            vendorSmsLogRepository.save(vendorSmsLog.get());
+//            user.setIsOtpValidated("Y");
+//            userRepository.save(user);
+//            log.info("OTP verified successfully for userId {}", email);
+//            return new Response("OTP verified successfully", HttpStatus.OK);
+//        } else {
+//            log.error("Invalid Otp is entered by the user {}", email);
+//            return new Response("Invalid Otp entered by the user " + email, HttpStatus.BAD_REQUEST);
+//        }
+//    }
+
+//    @Override
+//    @Transactional
+//    public Response updatePassword(CreateNewPasswordRequest createNewPasswordRequest) throws BadRequestException {
+//        if (!createNewPasswordRequest.getNewPassword().equals(createNewPasswordRequest.getConfirmPassword())) {
+//            log.error("New password is not same as confirm password for userId : {} ", createNewPasswordRequest.getUserId());
+//            throw new BadRequestException("New password is not same as confirm password ", HttpStatus.BAD_REQUEST);
+//        }
+//        if (createNewPasswordRequest.getNewPassword().length() < 5) {
+//            log.error("Minimum length of new password should be at least 5 characters");
+//            throw new BadRequestException("Minimum length of new password should be at least 5 characters", HttpStatus.BAD_REQUEST);
+//        }
+//        User user = getUser(createNewPasswordRequest.getUserId());
+//        if (user == null) {
+//            return new Response("No user detail found against email id " + createNewPasswordRequest.getUserId(), HttpStatus.NOT_FOUND);
+//        }
+//        Optional<VendorSmsLog> vendorSmsLog = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "U", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
+//        if (vendorSmsLog.isPresent() && createNewPasswordRequest.getOtp().equalsIgnoreCase(vendorSmsLog.get().getSmsOtp())) {
+//            user.setPassword(passwordEncoder.encode(createNewPasswordRequest.getNewPassword()));
+//            user.setIsPasswordActive("Y");
+//            vendorSmsLog.get().setStatus("E");
+//            vendorSmsLogRepository.save(vendorSmsLog.get());
+//            user.setUpdatedOn(new Date());
+//            user.setUpdatedBy(Long.valueOf(createNewPasswordRequest.getUserId()));
+//            userRepository.save(user);
+//            log.info("Password reset was successful, userId : {}", createNewPasswordRequest.getUserId());
+//            return new Response("Password reset was successful", HttpStatus.OK);
+//        } else {
+//            log.error("Otp is not verified.");
+//            return new Response("Otp is not verified.", HttpStatus.BAD_REQUEST);
+//        }
+//
+//    }
+
+//    @Override
+//    @Transactional
+//    public Response resetPassword(ResetPasswordRequest request, HttpServletRequest httpServletRequest) {
+//        Response response = new Response();
+//        //Logged in admin details
+//        String authorization = httpServletRequest.getHeader("Authorization");
+//        String jwtToken = authorization.substring(7);
+//        String adminEmail = jwtService.extractUsername(jwtToken);
+//        if (!adminEmail.isEmpty()) {
+//            log.info("Fetching user for resetPassword request, userId : {} ", request.getEmail());
+//            User user = getUser(request.getEmail());
+//            if (user == null) {
+//                log.error("User not found with email id {}", request.getEmail());
+//                return new Response("User not found with email id " + request.getEmail(), HttpStatus.NOT_FOUND);
+//            }
+//            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+//            user.setIsPasswordActive("Y");
+//            user.setUpdatedOn(new Date());
+//            user.setUpdatedBy(Long.valueOf(adminEmail));
+//            userRepository.save(user);
+//            log.info("Password reset was successful, userId : {}", request.getEmail());
+//            response.setCode(HttpStatus.OK.value());
+//            response.setStatus(HttpStatus.OK);
+//            response.setMessage("Password changed successfully");
+//            return response;
+//        }
+//        log.error("Invalid token details");
+//        return new Response("INVALID_TOKEN", HttpStatus.BAD_REQUEST);
+//    }
 
     private void getVendorSmsLog(String otp, String message, User user) throws InternalServerErrorException {
         VendorSmsLog vendorSmsLogData = new VendorSmsLog();
@@ -191,8 +275,8 @@ public class PasswordServiceImpl implements PasswordService, Constant {
         }
     }
 
-    private User getUser(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
+    private User getUser(String email, String companyCode) {
+        Optional<User> user = userRepository.findByEmailAndCompanyMaster_CompanyCode(email, companyCode);
         return user.orElse(null);
     }
 
