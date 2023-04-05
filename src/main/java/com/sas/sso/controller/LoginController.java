@@ -22,15 +22,16 @@ public class LoginController {
 	UserService userService;
 
 	@GetMapping(value = "auth/login")
-	ModelAndView loginForm(@RequestParam(required = true) String appName,HttpServletRequest httpServletRequest,HttpServletResponse httpServletResponse) {
+	ModelAndView loginForm(@RequestParam(required = true) String appName,
+			@RequestParam(required = false) String callBackUrl, HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse) {
 
-		if(httpServletRequest.getCookies()!=null && httpServletRequest.getCookies().length>0)
-		{
-			for (Cookie cookie: httpServletRequest.getCookies()) {
-				if(cookie.getName().equals("token")) {
-					
-					return userService.redirectAuthenticatedUser(appName,cookie.getValue(), httpServletResponse);
-					
+		if (httpServletRequest.getCookies() != null && httpServletRequest.getCookies().length > 0) {
+			for (Cookie cookie : httpServletRequest.getCookies()) {
+				if (cookie.getName().equals("token")) {
+
+					return userService.redirectAuthenticatedUser(appName, cookie.getValue(), httpServletResponse,callBackUrl);
+
 				}
 			}
 		}
@@ -39,6 +40,7 @@ public class LoginController {
 		modelAndView.setViewName("login");
 		LoginDTO loginDTO = new LoginDTO();
 		loginDTO.setAppName(appName);
+		loginDTO.setCallBackUrl(callBackUrl);
 		modelAndView.addObject("loginDTO", loginDTO);
 		return modelAndView;
 	}

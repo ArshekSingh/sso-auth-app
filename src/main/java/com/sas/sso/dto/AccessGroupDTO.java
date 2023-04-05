@@ -47,12 +47,4 @@ public class AccessGroupDTO {
 
     private List<AccessGroupRoleDto> accessGroupRoleDtos;
 
-    private Long offSet;
-
-    private int pageSize;
-
-    private int pageCount;
-
-    private int totalPage;
-
 }

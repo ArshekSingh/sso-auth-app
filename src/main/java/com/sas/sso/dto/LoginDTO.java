@@ -9,5 +9,7 @@ public class LoginDTO {
 	private String password;
 	private String appName;
 	private String companyCode;
+	private String callBackUrl;
 
 }
+

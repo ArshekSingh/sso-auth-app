@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -70,20 +71,24 @@ public class AccessGroupServiceImpl implements AccessGroupService {
 		if (tokenSession != null) {
 			Page<AccessGroup> page = accessGroupRepository.findByCompId(Long.valueOf(tokenSession.getCompanyId()),
 					paging);
-			AccessGroupDTO accessGroupDTO=accessGroupEntityToDto(page);
-			accessGroupDTO.setOffSet(page.getPageable().getOffset());
-			accessGroupDTO.setPageCount(page.getPageable().getPageNumber());
-			accessGroupDTO.setPageSize(page.getPageable().getPageSize());
-			accessGroupDTO.setTotalPage(page.getTotalPages());
-			return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK).data(accessGroupDTO)
+			AccessDTO dto = accessGroupEntityToDto(page);	
+			return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK).data(dto)
 					.count(page.getTotalElements()).build();
 		} else {
 			return Response.builder().code(HttpStatus.BAD_REQUEST.value()).status(HttpStatus.BAD_REQUEST).build();
 		}
 	}
 
-	private AccessGroupDTO accessGroupEntityToDto(Page<AccessGroup> page) {
-		return (AccessGroupDTO) page.map(this::convertEntityToDto);
+	private AccessDTO accessGroupEntityToDto(Page<AccessGroup> page) {
+		AccessDTO dto=new AccessDTO();
+		Page<AccessGroupDTO> accessGroupEntityToDto= page.map(this::convertEntityToDto);
+		List<AccessGroupDTO> content = accessGroupEntityToDto.getContent();
+		dto.setAccessGroupDTOs(content);
+		dto.setOffSet(page.getPageable().getOffset());
+		dto.setPageCount(page.getPageable().getPageNumber());
+		dto.setPageSize(page.getPageable().getPageSize());
+		dto.setTotalPage(page.getTotalPages());
+		return dto;
 	}
 
 	private AccessGroupDTO convertEntityToDto(AccessGroup accessGroup) {
@@ -197,7 +202,7 @@ public class AccessGroupServiceImpl implements AccessGroupService {
 			User user = userOptional.get();
 			user.getAccessGroups().clear();
 			user.getAccessGroups().addAll(userAccessGroupDTO.getAccessGroupIds().stream()
-					.map(this::getAccessGroupFromDTO).collect(Collectors.toSet()));
+					.map(this::getAccessGroupFromDTO).collect(Collectors.toList()));
 			userRepository.save(user);
 			return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK)
 					.message(HttpStatus.OK.getReasonPhrase()).build();

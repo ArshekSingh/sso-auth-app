@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.sas.sso.dto.LoginDTO;
@@ -70,10 +71,18 @@ public class UserServiceImpl implements UserService {
 				userUtils.addUserToSessionCache(user);
 				TokenSession tokenSession = userUtils.addTokenToCache(jwtService.generateToken(user),
 						user);
+				
 				AppMaster appMaster = appMasterOptional.get();
+				
 				StringBuilder builder = new StringBuilder();
-				builder.append("redirect:").append(appMaster.getBaseUrl())
-						.append("?token=".concat(tokenSession.getToken()));
+				
+				if (StringUtils.hasLength(loginDTO.getCallBackUrl()))
+					builder.append("redirect:").append(loginDTO.getCallBackUrl())
+							.append("?token=".concat(tokenSession.getToken()));
+				else
+					builder.append("redirect:").append(appMaster.getBaseUrl())
+							.append("?token=".concat(tokenSession.getToken()));
+				
 				modelAndView.setViewName(builder.toString());
 
 				setCookie(response, tokenSession);
@@ -107,9 +116,12 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public ModelAndView redirectAuthenticatedUser(String appName, String token, HttpServletResponse response) {
+	public ModelAndView redirectAuthenticatedUser(String appName, String token, HttpServletResponse response,String callBackUrl) {
 		log.info("Cookie session detected , validating..");
 		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("Login_v1/index");
+		LoginDTO loginDTO = new LoginDTO();
+		loginDTO.setAppName(appName);
 		try {
 
 			Claims claims = jwtService.extractAllClaims(token);
@@ -120,30 +132,27 @@ public class UserServiceImpl implements UserService {
 			if (appMasterOptional.isPresent()) {
 				AppMaster appMaster = appMasterOptional.get();
 				StringBuilder builder = new StringBuilder();
-				builder.append("redirect:").append(appMaster.getBaseUrl()).append("?token=".concat(token));
+				if(StringUtils.hasLength(callBackUrl))
+					builder.append("redirect:").append(callBackUrl).append("?token=".concat(token));
+				else
+					builder.append("redirect:").append(appMaster.getBaseUrl()).append("?token=".concat(token));
+					
 				log.info("Redirecting with existing session");
 				modelAndView.setViewName(builder.toString());
 			} else {
-				LoginDTO loginDTO = new LoginDTO();
+				
 				log.error("Company does not exist in system {}", appName);
-				modelAndView.setViewName("Login_v1/index");
 				modelAndView.addObject("loginDTO", loginDTO);
 				modelAndView.addObject("error_message", "Token tampered , Invalid Token");
 			}
 
 		} catch (ExpiredJwtException e) {
 			log.error("ExpiredJwtException occurred , token expired : {}", e.getMessage(), e);
-
-			LoginDTO loginDTO = new LoginDTO();
-			modelAndView.setViewName("Login_v1/index");
 			modelAndView.addObject("loginDTO", loginDTO);
 			modelAndView.addObject("error_message", "Token Expired");
 
 		} catch (SignatureException e) {
 			log.error("SignatureException occurred , token expired : {}", e.getMessage(), e);
-
-			LoginDTO loginDTO = new LoginDTO();
-			modelAndView.setViewName("Login_v1/index");
 			modelAndView.addObject("loginDTO", loginDTO);
 			modelAndView.addObject("error_message", "Token tampered , Invalid Token");
 
