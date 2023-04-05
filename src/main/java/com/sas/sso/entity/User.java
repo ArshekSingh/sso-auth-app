@@ -67,6 +67,7 @@ public class User extends Auditable<Long> implements UserDetails {
 	@JoinColumn(name = "comp_id")
 	private CompanyMaster companyMaster;
 
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return List.of(new SimpleGrantedAuthority("DEFAULT"));

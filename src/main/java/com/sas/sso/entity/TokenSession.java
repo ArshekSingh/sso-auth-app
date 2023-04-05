@@ -27,5 +27,10 @@ public class TokenSession implements Serializable {
 	private String token;
 
 	private String userId;
+	
+	private String companyId;
+	
+	private String companyCode;
 
+	private String appId;
 }

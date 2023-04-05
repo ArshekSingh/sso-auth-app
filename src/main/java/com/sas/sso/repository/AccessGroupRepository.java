@@ -21,9 +21,9 @@ public interface AccessGroupRepository extends PagingAndSortingRepository<Access
 
 	List<AccessGroup> findAllByOrderByCreatedDateDesc();
 
-	List<AccessGroup> findByActive(int active);
+	List<AccessGroup> findByActiveAndCompId(int active,Long copmId);
 
-	Page<AccessGroup> findAll(Pageable pageable);
+	Page<AccessGroup> findByCompId(Long compId , Pageable pageable);
 
 	boolean existsByName(String name);
 
@@ -36,4 +36,7 @@ public interface AccessGroupRepository extends PagingAndSortingRepository<Access
 			+ "inner join app_master am on am.comp_id = cm.comp_id "
 			+ "where uag.user_id=?1  and am.app_name=?2", nativeQuery = true)
 	Set<String> findAllRolesOfAppAndCompany(Long userId,String appName);
+
+	@Query(value = "SELECT ag.* FROM access_groups ag WHERE ag.access_group_id NOT IN (SELECT user_id FROM user_access_group uag WHERE uag.user_id=?1)", nativeQuery = true)
+	List<AccessGroup> findAllUnAssignedGroupByUser(Long userId);
 }

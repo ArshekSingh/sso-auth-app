@@ -1,23 +1,37 @@
 package com.sas.sso.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Data
-@Table(name = "access_groups")
-public class AccessGroup extends Auditable<Long> {
+@Getter
+@Setter
+@Table(name = "access_group")
+public class AccessGroup extends Auditable<String> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "access_group_id")
+	@Column(name = "id")
 	private Long id;
+
+	@Column(name = "comp_id")
+	private Long compId;
+
+	@Column(name = "app_id")
+	private Long appId;
 
 	@Column(name = "access_group_no")
 	private String accessGroupNo;
@@ -34,4 +48,7 @@ public class AccessGroup extends Auditable<Long> {
 	@Column(name = "editable")
 	private Integer editable;
 
+	@OneToMany(mappedBy ="accessGroup",cascade = CascadeType.ALL,fetch=FetchType.LAZY,orphanRemoval=true)
+	private List<AccessGroupRoles> accessGroupRoles=new ArrayList();
+	
 }
