@@ -1,6 +1,6 @@
 package com.sas.sso.dto;
 
-import lombok.Data;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -9,9 +9,13 @@ import javax.validation.constraints.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-@Data
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class AccessGroupDTO {
 
 
@@ -40,5 +44,15 @@ public class AccessGroupDTO {
     
     private String appName;
     private String description;
+
+    private List<AccessGroupRoleDto> accessGroupRoleDtos;
+
+    private Long offSet;
+
+    private int pageSize;
+
+    private int pageCount;
+
+    private int totalPage;
 
 }

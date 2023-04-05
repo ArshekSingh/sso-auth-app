@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 
+import com.sas.sso.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,12 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.sas.sso.dto.AccessGroupDTO;
-import com.sas.sso.dto.AppMasterDto;
-import com.sas.sso.dto.Response;
-import com.sas.sso.dto.RoleDTO;
-import com.sas.sso.dto.UserAccessAssignmentDTO;
-import com.sas.sso.dto.UserAccessGroupDTO;
 import com.sas.sso.entity.AccessGroup;
 import com.sas.sso.entity.AccessGroupRoles;
 import com.sas.sso.entity.AppMaster;
@@ -74,13 +70,41 @@ public class AccessGroupServiceImpl implements AccessGroupService {
 		if (tokenSession != null) {
 			Page<AccessGroup> page = accessGroupRepository.findByCompId(Long.valueOf(tokenSession.getCompanyId()),
 					paging);
-			
-			return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK).data(page)
+			AccessGroupDTO accessGroupDTO=accessGroupEntityToDto(page);
+			accessGroupDTO.setOffSet(page.getPageable().getOffset());
+			accessGroupDTO.setPageCount(page.getPageable().getPageNumber());
+			accessGroupDTO.setPageSize(page.getPageable().getPageSize());
+			accessGroupDTO.setTotalPage(page.getTotalPages());
+			return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK).data(accessGroupDTO)
 					.count(page.getTotalElements()).build();
 		} else {
 			return Response.builder().code(HttpStatus.BAD_REQUEST.value()).status(HttpStatus.BAD_REQUEST).build();
 		}
 	}
+
+	private AccessGroupDTO accessGroupEntityToDto(Page<AccessGroup> page) {
+		return (AccessGroupDTO) page.map(this::convertEntityToDto);
+	}
+
+	private AccessGroupDTO convertEntityToDto(AccessGroup accessGroup) {
+		AccessGroupDTO dto=new AccessGroupDTO();
+		List<AccessGroupRoleDto> roleDtoList=new ArrayList<>();
+		dto.setActive(accessGroup.isActive());
+		dto.setAppId(accessGroup.getAppId());
+		dto.setDescription(accessGroup.getDescription());
+		dto.setAccessGroupName(accessGroup.getAccessGroupNo());
+		dto.setAccessGroupId(accessGroup.getId());
+		dto.setCompId(accessGroup.getCompId());
+		for(AccessGroupRoles roles : accessGroup.getAccessGroupRoles()){
+			AccessGroupRoleDto roleDto =new AccessGroupRoleDto();
+			roleDto.setAccessGroupRoleId(roles.getId());
+			roleDto.setRoleName(roles.getRole());
+			roleDtoList.add(roleDto);
+		}
+		dto.setAccessGroupRoleDtos(roleDtoList);
+		return dto;
+	}
+
 
 	@Override
 	@Transactional(rollbackOn = Throwable.class)
