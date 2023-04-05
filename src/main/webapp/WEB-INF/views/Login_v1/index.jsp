@@ -45,6 +45,7 @@
 
 				<form:form id="login-form" class="login100-form validate-form" method="POST" action="${context}/auth/login" modelAttribute="loginDTO">
 				<form:hidden path="appName"/>
+				<form:hidden path="callBackUrl"/>
 					<span class="login100-form-title">
 						Login
 					</span>
