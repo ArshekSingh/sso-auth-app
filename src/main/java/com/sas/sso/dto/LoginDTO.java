@@ -1,8 +1,11 @@
 package com.sas.sso.dto;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class LoginDTO {
 
 	private String userName;
@@ -10,6 +13,11 @@ public class LoginDTO {
 	private String appName;
 	private String companyCode;
 	private String callBackUrl;
+
+	public LoginDTO(String userName, String companyCode) {
+		this.userName = userName;
+		this.companyCode = companyCode;
+	}
 
 }
 

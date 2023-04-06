@@ -35,7 +35,6 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.Properties;
 
-
 @Service
 @Slf4j
 @AllArgsConstructor
@@ -252,7 +251,7 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
             user.setUpdatedBy(createNewPasswordRequest.getUserName());
             userRepository.save(user);
             log.info("Password reset was successful, userId : {}", createNewPasswordRequest.getUserName());
-            modelAndView.addObject("loginDto", new LoginDTO());
+            modelAndView.addObject("loginDTO", new LoginDTO(createNewPasswordRequest.getUserName(), createNewPasswordRequest.getCompanyCode()));
             modelAndView.addObject("success_message", "Password reset was successful");
             modelAndView.setViewName("Login_v1/index");
 
@@ -265,7 +264,7 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
             user.setUpdatedBy(createNewPasswordRequest.getUserName());
             userRepository.save(user);
             log.info("Password reset was successful, userId : {}", createNewPasswordRequest.getUserName());
-            modelAndView.addObject("loginDTO", new LoginDTO());
+            modelAndView.addObject("loginDTO", new LoginDTO(createNewPasswordRequest.getUserName(), createNewPasswordRequest.getCompanyCode()));
             modelAndView.addObject("success_message", "Password reset was successful");
             modelAndView.setViewName("Login_v1/index");
         } else {
