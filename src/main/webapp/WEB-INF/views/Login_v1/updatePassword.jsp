@@ -54,7 +54,7 @@
 				    <form:input type="hidden" path="otp"/>
 
 					<div class="wrap-input100 validate-input" data-validate = "Valid password is required: ex@abc.xyz">
-						<form:input class="input100" type="text"  path="newPassword"  placeholder="Enter newPassword" required="true" />
+						<form:input class="input100" type="password"  path="newPassword"  placeholder="Enter newPassword" required="true" />
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-envelope" aria-hidden="true"></i>
@@ -67,7 +67,7 @@
 					</div>
 
 					<div class="wrap-input100 validate-input" data-validate = "Valid confirmPassword is required: ex@abc.xyz">
-                    						<form:input class="input100" type="text"  path="confirmPassword"  placeholder="Enter confirmPassword" required="true" />
+                    						<form:input class="input100" type="password"  path="confirmPassword"  placeholder="Enter confirmPassword" required="true" />
                     						<span class="focus-input100"></span>
                     						<span class="symbol-input100">
                     							<i class="fa fa-envelope" aria-hidden="true"></i>

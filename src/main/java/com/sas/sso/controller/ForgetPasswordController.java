@@ -2,6 +2,7 @@ package com.sas.sso.controller;
 
 import com.sas.sso.dto.ForgetPasswordDto;
 import com.sas.sso.dto.VerifyOtpDto;
+import com.sas.sso.exception.InternalServerErrorException;
 import com.sas.sso.request.CreateNewPasswordRequest;
 import com.sas.sso.service.ForgetPasswordService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class ForgetPasswordController {
     }
 
     @PostMapping("/auth/forgetPassword")
-    public ModelAndView forgetPassword(@ModelAttribute ForgetPasswordDto forgetPasswordDto) {
+    public ModelAndView forgetPassword(@ModelAttribute ForgetPasswordDto forgetPasswordDto) throws InternalServerErrorException {
         log.info("Request initiated to forget password for email id {} and company code {}", forgetPasswordDto.getUserName(), forgetPasswordDto.getCompanyCode());
         return passwordService.forgetPassword(forgetPasswordDto);
     }

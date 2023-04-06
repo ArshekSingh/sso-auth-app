@@ -48,7 +48,7 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
     private final EmailProperties emailProperties;
 
     @Override
-    public ModelAndView forgetPassword(ForgetPasswordDto forgetPasswordDto) {
+    public ModelAndView forgetPassword(ForgetPasswordDto forgetPasswordDto) throws InternalServerErrorException {
         ModelAndView modelAndView = new ModelAndView();
         boolean isValid = true;
         if (!StringUtils.hasText(forgetPasswordDto.getUserName())) {
@@ -73,14 +73,11 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
                 modelAndView.setViewName("Login_v1/forgetPassword");
                 modelAndView.addObject("forgetPasswordDto", forgetDto);
                 modelAndView.addObject("error_message", "No user details found");
-            } else if (!StringUtils.hasText(user.getMobile())) {
-                log.error("Mobile is not mapped with the email {}", forgetPasswordDto.getUserName());
-                ForgetPasswordDto forgetDto = new ForgetPasswordDto();
-                modelAndView.setViewName("Login_v1/forgetPassword");
-                modelAndView.addObject("forgetPasswordDto", forgetDto);
-                modelAndView.addObject("error_message", "Mobile is not mapped with the email");
-            } else {
-//            getVendorSmsLog(otp, message, user);
+            }
+            else {
+                if(StringUtils.hasText(user.getMobile())) {
+                    getVendorSmsLog(otp, message, user);
+                }
                 VendorSmsLog vendorSmsLogData = new VendorSmsLog();
                 ModelAndView sendOtpOnMail = sendOtpOnMail(otp, message, user, vendorSmsLogData);
                 if (sendOtpOnMail.getStatus() != null && sendOtpOnMail.getStatus().is2xxSuccessful()) {
@@ -112,9 +109,9 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
         vendorSmsLogRepository.save(vendorSmsLogData);
 
         Properties properties = getProperties();
-        //Step 1: to get the session object..
+        //Step 1: to get the session object.
         Session session = getSession(properties);
-        //Step 2 : compose the message [text,multi media]
+        //Step 2 : compose the message [text, multi media]
         MimeMessage m = new MimeMessage(session);
         MimeMultipart multiPart = new MimeMultipart();
         ModelAndView modelAndView = new ModelAndView();
@@ -238,7 +235,12 @@ public class ForgetPasswordServiceImpl implements ForgetPasswordService, Constan
             modelAndView.addObject("error_message", "No user detail found against email id ");
             modelAndView.setViewName("Login_v1/updatePassword");
         }
-        Optional<VendorSmsLog> mobileOtp = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "U", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
+        Optional<VendorSmsLog> mobileOtp = Optional.empty();
+        assert user != null;
+        if(StringUtils.hasText(user.getMobile())) {
+             mobileOtp = vendorSmsLogRepository.findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getMobile(), "U", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
+        }
+
         Optional<VendorSmsLog> emailOtp = vendorSmsLogRepository.findTop1BySmsEmailAndMailStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(user.getEmail(), "U", "FORGET", LocalDateTime.now().minusMinutes(smsProperties.getOtpExpiryTime()));
 
         if (emailOtp.isPresent() && createNewPasswordRequest.getOtp().equalsIgnoreCase(emailOtp.get().getSmsOtp())) {
