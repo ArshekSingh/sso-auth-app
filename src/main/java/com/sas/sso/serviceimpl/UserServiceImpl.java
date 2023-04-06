@@ -18,6 +18,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.sas.sso.dto.LoginDTO;
+import com.sas.sso.dto.Response;
+import com.sas.sso.entity.AppMaster;
+import com.sas.sso.entity.CompanyMaster;
+import com.sas.sso.entity.TokenSession;
+import com.sas.sso.entity.User;
 import com.sas.sso.repository.AppMasterRepository;
 import com.sas.sso.repository.UserRepository;
 import com.sas.sso.service.UserService;
@@ -117,48 +122,62 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public ModelAndView redirectAuthenticatedUser(String appName, String token, HttpServletResponse response,String callBackUrl) {
+	public ModelAndView redirectAuthenticatedUser(String appName, String token, HttpServletResponse response,
+			String callBackUrl) {
 		log.info("Cookie session detected , validating..");
 		ModelAndView modelAndView = new ModelAndView();
 		modelAndView.setViewName("Login_v1/index");
 		LoginDTO loginDTO = new LoginDTO();
 		loginDTO.setAppName(appName);
-		try {
+		loginDTO.setCallBackUrl(callBackUrl);
+		Optional<TokenSession> tokenSessionOptional = userUtils.findByToken(token);
+		if (tokenSessionOptional.isPresent()) {
+			try {
 
-			Claims claims = jwtService.extractAllClaims(token);
-			HashMap<String, Object> companyClaims = (HashMap<String, Object>) claims.get("company");
+				Claims claims = jwtService.extractAllClaims(token);
+				HashMap<String, Object> companyClaims = (HashMap<String, Object>) claims.get("company");
 
-			Optional<AppMaster> appMasterOptional = appMasterRepository.findByApplicationNameAndCompanyId(appName,
-					Long.parseLong(companyClaims.get("companyId").toString()));
-			if (appMasterOptional.isPresent()) {
-				AppMaster appMaster = appMasterOptional.get();
-				StringBuilder builder = new StringBuilder();
-				if(StringUtils.hasLength(callBackUrl))
-					builder.append("redirect:").append(callBackUrl).append("?token=".concat(token));
-				else
-					builder.append("redirect:").append(appMaster.getBaseUrl()).append("?token=".concat(token));
-					
-				log.info("Redirecting with existing session");
-				modelAndView.setViewName(builder.toString());
-			} else {
-				
-				log.error("Company does not exist in system {}", appName);
+				Optional<AppMaster> appMasterOptional = appMasterRepository.findByApplicationNameAndCompanyId(appName,
+						Long.parseLong(companyClaims.get("companyId").toString()));
+				if (appMasterOptional.isPresent()) {
+					AppMaster appMaster = appMasterOptional.get();
+					StringBuilder builder = new StringBuilder();
+					if (StringUtils.hasLength(callBackUrl))
+						builder.append("redirect:").append(callBackUrl).append("?token=".concat(token));
+					else
+						builder.append("redirect:").append(appMaster.getBaseUrl()).append("?token=".concat(token));
+
+					log.info("Redirecting with existing session");
+					modelAndView.setViewName(builder.toString());
+				} else {
+
+					log.error("Company does not exist in system {}", appName);
+					modelAndView.addObject("loginDTO", loginDTO);
+					modelAndView.addObject("error_message", "Token tampered , Invalid Token");
+				}
+
+			} catch (ExpiredJwtException e) {
+				log.error("ExpiredJwtException occurred , token expired : {}", e.getMessage(), e);
+				modelAndView.addObject("loginDTO", loginDTO);
+				modelAndView.addObject("error_message", "Token Expired");
+
+			} catch (SignatureException e) {
+				log.error("SignatureException occurred , token expired : {}", e.getMessage(), e);
 				modelAndView.addObject("loginDTO", loginDTO);
 				modelAndView.addObject("error_message", "Token tampered , Invalid Token");
+
 			}
-
-		} catch (ExpiredJwtException e) {
-			log.error("ExpiredJwtException occurred , token expired : {}", e.getMessage(), e);
+		} else {
+			modelAndView.setViewName("Login_v1/index");
 			modelAndView.addObject("loginDTO", loginDTO);
-			modelAndView.addObject("error_message", "Token Expired");
-
-		} catch (SignatureException e) {
-			log.error("SignatureException occurred , token expired : {}", e.getMessage(), e);
-			modelAndView.addObject("loginDTO", loginDTO);
-			modelAndView.addObject("error_message", "Token tampered , Invalid Token");
 
 		}
 		return modelAndView;
+	}
+
+	@Override
+	public Response logout() {
+		return userUtils.removeThisSessionToken();
 	}
 
 	@Override

@@ -6,12 +6,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.sas.sso.dto.Response;
 import com.sas.sso.entity.TokenSession;
 import com.sas.sso.entity.User;
 import com.sas.sso.entity.UserSession;
@@ -131,5 +133,26 @@ public class UserUtils {
 			return null;
 		}
 	}
+	
+	public Response removeThisSessionToken() {
+		Optional<String> jwtToken = getAuthTokenFromRequest();
+
+		if (jwtToken.isPresent()) {
+			log.info("Token found , removing this from session register");
+			Optional<TokenSession> tokenSession = tokenRedisRepository.findByToken(jwtToken.get());
+			if (tokenSession.isPresent()) {
+				tokenRedisRepository.delete(tokenSession.get());
+				return Response.builder().code(HttpStatus.OK.value()).status(HttpStatus.OK).message("Logged out")
+						.build();
+			} else {
+				return Response.builder().code(HttpStatus.NOT_FOUND.value()).status(HttpStatus.NOT_FOUND)
+						.message("Session Not found").build();
+			}
+		} else {
+			return Response.builder().code(HttpStatus.NOT_FOUND.value()).status(HttpStatus.NOT_FOUND)
+					.message("Session Not found").build();
+		}
+	}
+	
 
 }
