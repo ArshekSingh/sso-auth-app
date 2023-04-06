@@ -2,18 +2,13 @@ package com.sas.sso.serviceimpl;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 
-import com.sas.sso.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +16,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.sas.sso.dto.AccessDTO;
+import com.sas.sso.dto.AccessGroupDTO;
+import com.sas.sso.dto.AccessGroupRoleDto;
+import com.sas.sso.dto.AppMasterDto;
+import com.sas.sso.dto.Response;
+import com.sas.sso.dto.RoleDTO;
+import com.sas.sso.dto.UserAccessAssignmentDTO;
+import com.sas.sso.dto.UserAccessGroupDTO;
 import com.sas.sso.entity.AccessGroup;
 import com.sas.sso.entity.AccessGroupRoles;
 import com.sas.sso.entity.AppMaster;
