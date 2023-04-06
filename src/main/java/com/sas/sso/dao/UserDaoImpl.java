@@ -1,12 +1,17 @@
 package com.sas.sso.dao;
 
+import com.sas.sso.entity.CompanyMaster;
 import com.sas.sso.entity.User;
+import com.sas.sso.request.UserRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -17,14 +22,15 @@ public class UserDaoImpl implements UserDao {
     @Autowired
     EntityManager entityManager;
     @Override
-    public User findUserByIdOrNameOrEmail(Long id, String name, String email) {
+    public List<User> getUserDetailsByFilter(UserRequest request) {
         try {
             CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
             CriteriaQuery<User> criteria = criteriaBuilder.createQuery(User.class);
             Root<User> userRoot = criteria.from(User.class);
-            List<Predicate> predicates = getPredicates(id, name, email, criteriaBuilder, userRoot);
+            Join<User, CompanyMaster> companyJoin = userRoot.join("companyMaster");
+            List<Predicate> predicates = getPredicates(request, criteriaBuilder, userRoot,companyJoin);
             criteria.select(userRoot).where(predicates.toArray(new Predicate[predicates.size()]));
-            return  entityManager.createQuery(criteria).getSingleResult();
+            return entityManager.createQuery(criteria).setFirstResult(request.getStartIndex()).setMaxResults(request.getEndIndex()).getResultList();
         } catch (Exception e) {
             e.getMessage();
 
@@ -32,16 +38,16 @@ public class UserDaoImpl implements UserDao {
         return null;
     }
 
-    private List<Predicate> getPredicates( Long id,String name, String email, CriteriaBuilder criteriaBuilder, Root<User> userRoot) {
+    private List<Predicate> getPredicates(UserRequest request, CriteriaBuilder criteriaBuilder, Root<User> userRoot, Join<User, CompanyMaster> companyJoin) {
         List<Predicate> predicates = new ArrayList<>();
-        if(id!=null){
-            predicates.add(criteriaBuilder.equal(userRoot.get("id"), id));
+        if(StringUtils.hasText(request.getFirstName())){
+            predicates.add(criteriaBuilder.equal(userRoot.get("firstName"), request.getFirstName()));
         }
-        if(name != null){
-            predicates.add(criteriaBuilder.equal(userRoot.get("name"), name));
+        if(StringUtils.hasText(request.getEmail())){
+            predicates.add(criteriaBuilder.equal(userRoot.get("email"), request.getEmail()));
         }
-        if(email!=null){
-            predicates.add(criteriaBuilder.equal(userRoot.get(email),email));
+        if(request.getCompId() != null ){
+            predicates.add(criteriaBuilder.equal(companyJoin.get("companyId"),request.getCompId()));
         }
         return predicates;
     }

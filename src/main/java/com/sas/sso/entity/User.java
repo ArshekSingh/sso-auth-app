@@ -1,5 +1,6 @@
 package com.sas.sso.entity;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +58,26 @@ public class User extends Auditable<Long> implements UserDetails {
 	@OneToOne
 	@JoinColumn(name = "comp_id")
 	private CompanyMaster companyMaster;
+	
+	@Column(name="mobile")
+	private String mobile;
+	
+	@Column(name="dob")
+	private LocalDate dob;
+	
+	@Column(name="active")
+	private boolean active;
+	
+	@Column(name="is_password_active")
+	private String isPasswordActive;
+	
+	@Column(name="is_otp_validated")
+	private String isOtpValidated;
+	
+	@OneToOne
+	@JoinColumn(name = "app_id")
+	private AppMaster appMaster;
+	
 
 
 	@Override

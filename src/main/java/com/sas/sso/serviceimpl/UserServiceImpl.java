@@ -2,14 +2,19 @@ package com.sas.sso.serviceimpl;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.sas.sso.constants.Constant;
 import com.sas.sso.dao.UserDao;
 import com.sas.sso.dto.Response;
 import com.sas.sso.dto.UserDto;
 import com.sas.sso.entity.*;
+import com.sas.sso.request.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +31,7 @@ import com.sas.sso.entity.User;
 import com.sas.sso.repository.AppMasterRepository;
 import com.sas.sso.repository.UserRepository;
 import com.sas.sso.service.UserService;
+import com.sas.sso.utils.DateTimeUtil;
 import com.sas.sso.utils.UserUtils;
 
 import io.jsonwebtoken.Claims;
@@ -35,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService , Constant {
 
 	private static final int ONE_DAY_IN_SECONDS = 86400;
 
@@ -193,25 +199,13 @@ public class UserServiceImpl implements UserService {
 		user.setFirstName(userDto.getFirstName());
 		user.setLastname(userDto.getLastname());
 		user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
-		//set company Master
-		CompanyMaster companyMaster = new CompanyMaster();
-		companyMaster.setCompanyName(userDto.getCompanyMaster().getCompanyName());
-		companyMaster.setCompanyName(userDto.getCompanyMaster().getCompanyName());
-		companyMaster.setWebsiteUrl(userDto.getCompanyMaster().getWebsiteUrl());
-		user.setCompanyMaster(companyMaster);
-
-		//set Access group
-		for(AccessGroup accessGroup1 : userDto.getAccessGroups()) {
-			AccessGroup accessGroup = new AccessGroup();
-			accessGroup.setAccessGroupNo(accessGroup1.getAccessGroupNo());
-			accessGroup.setDescription(accessGroup1.getDescription());
-			accessGroup.setName(accessGroup1.getName());
-			accessGroup.setActive(true);
-			accessGroup.setEditable(accessGroup1.getEditable());
-			accessGroup.setCreatedBy(accessGroup1.getCreatedBy());
-			user.setAccessGroups((Set<AccessGroup>) accessGroup);
+		user.setActive(userDto.isActive());
+		if(userDto.getDob() != null) {
+			user.setDob(DateTimeUtil.stringToDate(userDto.getDob()));
 		}
-
+		user.setMobile(userDto.getMobile());
+		user.setIsOtpValidated(userDto.getIsOtpValidated());
+		user.setIsPasswordActive(userDto.getIsPasswordActive());
 		userRepository.save(user);
 		log.info("User saved successfully");
 		return  new Response("USER CREATED SUCCESSFULLY",HttpStatus.OK);
@@ -225,61 +219,60 @@ public class UserServiceImpl implements UserService {
 			log.info("User not found for this emailId ->{}",userDto.getEmail());
 			return new Response("User not present for this email id -> {}",userDto.getEmail(),HttpStatus.BAD_REQUEST);
 		}
-		User user = new User();
+		User user = userOptional.get();
 		user.setFirstName(userDto.getFirstName());
 		user.setLastname(userDto.getLastname());
 		user.setEmail(userDto.getEmail());
-		user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
-		//set company Master
-		CompanyMaster companyMaster = new CompanyMaster();
-		companyMaster.setCompanyName(userDto.getCompanyMaster().getCompanyName());
-		companyMaster.setCompanyName(userDto.getCompanyMaster().getCompanyName());
-		companyMaster.setWebsiteUrl(userDto.getCompanyMaster().getWebsiteUrl());
-		user.setCompanyMaster(companyMaster);
-
-		//set Access group
-		for(AccessGroup accessGrp : userDto.getAccessGroups()){
-			AccessGroup accessGroup = new AccessGroup();
-			accessGroup.setAccessGroupNo(accessGrp.getAccessGroupNo());
-			accessGroup.setDescription(accessGrp.getDescription());
-			accessGroup.setName(accessGrp.getName());
-			accessGroup.setEditable(accessGrp.getEditable());
-			user.setAccessGroups((Set<AccessGroup>) accessGroup);
+		user.setActive(userDto.isActive());
+		if(userDto.getDob() != null) {
+			user.setDob(DateTimeUtil.stringToDate(userDto.getDob()));
 		}
-
+		user.setMobile(userDto.getMobile());
+		user.setIsOtpValidated(userDto.getIsOtpValidated());
+		user.setIsPasswordActive(userDto.getIsPasswordActive());
 		userRepository.save(user);
 		log.info("User updated successfully for emailId -> {}",userDto.getEmail());
 		return new Response("User updated successfully",HttpStatus.OK);
 	}
 
+//	@Override
+//	public Response findByIdOrNameOrEmail(Long id, String name, String email) {
+//		User userOptional = userDao.findUserByIdOrNameOrEmail(id,name,email);
+//		if(userOptional==null){
+//			return new Response("User Not Found",HttpStatus.BAD_REQUEST);
+//		}
+//		User user = new User();
+//		user.setId(userOptional.getId());
+//		user.setEmail(userOptional.getEmail());
+//		user.setFirstName(userOptional.getFirstName());
+//		user.setLastname(userOptional.getLastname());
+//		return new Response("User found successfully",user,HttpStatus.OK);
+//
+//	}
+
 	@Override
-	public Response findByIdOrNameOrEmail(Long id, String name, String email) {
-		User userOptional = userDao.findUserByIdOrNameOrEmail(id,name,email);
-		if(userOptional==null){
-			return new Response("User Not Found",HttpStatus.BAD_REQUEST);
-		}
-		User user = new User();
-		user.setId(userOptional.getId());
-		user.setEmail(userOptional.getEmail());
-		user.setFirstName(userOptional.getFirstName());
-		user.setLastname(userOptional.getLastname());
-		//get company Master
-		CompanyMaster companyMaster = new CompanyMaster();
-		companyMaster.setCompanyName(userOptional.getCompanyMaster().getCompanyName());
-		companyMaster.setCompanyName(userOptional.getCompanyMaster().getCompanyName());
-		companyMaster.setWebsiteUrl(userOptional.getCompanyMaster().getWebsiteUrl());
-		user.setCompanyMaster(companyMaster);
+	public Response findAllFilterData(UserRequest request) {
+		
+		List<User> users=userDao.getUserDetailsByFilter(request);
+		 List<UserDto> dtoList= users.stream().map(this::entityToDto).collect(Collectors.toList());
+		return new Response(SUCCESS,dtoList,HttpStatus.OK);
+	}
 
-		//get Access group
-		for(AccessGroup accessGrp : userOptional.getAccessGroups()){
-			AccessGroup accessGroup = new AccessGroup();
-			accessGroup.setAccessGroupNo(accessGrp.getAccessGroupNo());
-			accessGroup.setDescription(accessGrp.getDescription());
-			accessGroup.setName(accessGrp.getName());
-			accessGroup.setEditable(accessGrp.getEditable());
-			user.setAccessGroups((Set<AccessGroup>) accessGroup);
+	private UserDto entityToDto(User user) {
+		UserDto dto=new UserDto();
+		dto.setFirstName(user.getFirstName());
+		dto.setEmail(user.getEmail());
+		dto.setLastname(user.getLastname());
+		dto.setCompId(Objects.nonNull(user.getCompanyMaster())?user.getCompanyMaster().getCompanyId():null);
+		dto.setCompName(Objects.nonNull(user.getCompanyMaster())?user.getCompanyMaster().getCompanyName():null);
+		dto.setActive(user.isActive());
+		if(user.getDob() != null) {
+			dto.setDob(DateTimeUtil.dateToString(user.getDob()));
 		}
-		return new Response("User found successfully",user,HttpStatus.OK);
-
+		dto.setMobile(user.getMobile());
+		dto.setIsOtpValidated(user.getIsOtpValidated());
+		dto.setIsPasswordActive(user.getIsPasswordActive());
+		return dto;
+		
 	}
 }

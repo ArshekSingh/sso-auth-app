@@ -1,12 +1,8 @@
 package com.sas.sso.dto;
 
-import com.sas.sso.entity.AccessGroup;
-import com.sas.sso.entity.CompanyMaster;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -17,6 +13,13 @@ public class UserDto {
     private String lastname;
     private String email;
     private String password;
-    private Set<AccessGroup> accessGroups;
-    private CompanyMaster companyMaster;
+    private Long compId;
+    private String compName;
+    private Long appId;
+    private String appName;
+	private String mobile;
+	private String dob;
+	private boolean active;
+	private String isPasswordActive;
+	private String isOtpValidated;
 }
