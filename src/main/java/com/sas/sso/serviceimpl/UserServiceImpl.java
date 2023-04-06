@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.sas.sso.dto.LoginDTO;
+import com.sas.sso.dto.Response;
 import com.sas.sso.entity.AppMaster;
 import com.sas.sso.entity.CompanyMaster;
 import com.sas.sso.entity.TokenSession;
@@ -158,6 +159,11 @@ public class UserServiceImpl implements UserService {
 
 		}
 		return modelAndView;
+	}
+
+	@Override
+	public Response logout() {
+		return userUtils.removeThisSessionToken();
 	}
 
 }
