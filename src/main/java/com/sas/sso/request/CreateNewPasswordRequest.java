@@ -1,19 +1,24 @@
 package com.sas.sso.request;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.validation.constraints.NotEmpty;
-
-@Data
-@Slf4j
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class CreateNewPasswordRequest {
-    @NotEmpty
-    private String userId;
-    @NotEmpty
+    private String userName;
     private String otp;
-    @NotEmpty
     private String newPassword;
-    @NotEmpty
     private String confirmPassword;
+    private String companyCode;
+
+    public CreateNewPasswordRequest(String userName, String companyCode, String otp) {
+        this.userName = userName;
+        this.companyCode = companyCode;
+        this.otp = otp;
+    }
 }

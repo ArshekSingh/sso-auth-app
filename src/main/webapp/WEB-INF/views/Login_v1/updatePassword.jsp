@@ -9,7 +9,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Forget | SAS Techstudio SSO</title>
+	<title>Create | SAS Techstudio SSO</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->
@@ -37,46 +37,52 @@
 <body>
 
 	<div class="limiter">
-		<div style="    background: #db2228;" class="container-forget100">
-			<div class="wrap-forget100">
-				<div class="forget100-pic js-tilt" data-tilt>
+		<div style="    background: #db2228;" class="container-create100">
+			<div class="wrap-create100">
+				<div class="create100-pic js-tilt" data-tilt>
 					<img style="height:75%" src="https://static.wixstatic.com/media/bd2c79_0c5dd9ffd2fd4f3eaeeba6aa250b7ebf~mv2.png/v1/fill/w_106,h_113,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/SAS_Techstudio_Logo.png" alt="IMG">
 				</div>
 
-				<form:form id="forget-form" class="forget100-form validate-form" method="POST" action="${context}/auth/forgetPassword" modelAttribute="forgetPasswordDTO">
+				<form:form id="create-form" class="create100-form validate-form" method="POST" action="${context}/auth/updatePassword" modelAttribute="createPasswordDto">
 
-					<span class="forget100-form-title">
-						Forget
+					<span class="create100-form-title">
+						Create Password
 					</span>
-					<div class="wrap-input100 validate-input" data-validate = "Company Code is required">
-						<form:input class="input100" type="text"  path="companyCode"  placeholder="Enter Company Code" required="true" />
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-building" aria-hidden="true"></i>
-						</span>
-						 <c:if test="${not empty error_message_company_code}">
-                        					 	<br>
-                            					<p style="text-align:center"><strong>${error_message_company_code}</strong></p>
-                            					<br>
-                        					  </c:if>
-					</div>
-					<div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<form:input class="input100" type="email"  path="userName"  placeholder="Enter Email" required="true" />
+
+					<form:input type="hidden" path="userName"/>
+					<form:input type="hidden" path="companyCode"/>
+				    <form:input type="hidden" path="otp"/>
+
+					<div class="wrap-input100 validate-input" data-validate = "Valid password is required: ex@abc.xyz">
+						<form:input class="input100" type="text"  path="newPassword"  placeholder="Enter newPassword" required="true" />
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-envelope" aria-hidden="true"></i>
 						</span>
-						<c:if test="${not empty error_message_user_name}">
+						<c:if test="${not empty error_message_newPassword}">
                                                 					 	<br>
-                                                    					<p style="text-align:center"><strong>${error_message_user_name}</strong></p>
+                                                    					<p style="text-align:center"><strong>${error_message_newPassword}</strong></p>
                                                     					<br>
                                                 					  </c:if>
 					</div>
 
-					<div class="container-forget100-form-btn">
+					<div class="wrap-input100 validate-input" data-validate = "Valid confirmPassword is required: ex@abc.xyz">
+                    						<form:input class="input100" type="text"  path="confirmPassword"  placeholder="Enter confirmPassword" required="true" />
+                    						<span class="focus-input100"></span>
+                    						<span class="symbol-input100">
+                    							<i class="fa fa-envelope" aria-hidden="true"></i>
+                    						</span>
+                    						<c:if test="${not empty error_message_confirmPassword}">
+                                                                    					 	<br>
+                                                                        					<p style="text-align:center"><strong>${error_message_confirmPassword}</strong></p>
+                                                                        					<br>
+                                                                    					  </c:if>
+                    					</div>
 
-						<button class="forget100-form-btn">
-							Forget
+					<div class="container-create100-form-btn">
+
+						<button class="create100-form-btn">
+							Create
 						</button>
 						 <c:if test="${not empty error_message}">
 					 	<br>
@@ -113,7 +119,7 @@
 		$('.js-tilt').tilt({
 			scale: 1.1
 		});
-		$("#forget-form").submit(function() {
+		$("#create-form").submit(function() {
 
 $.blockUI({
 

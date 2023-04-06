@@ -34,6 +34,10 @@ public class VendorSmsLog implements Serializable {
     private String smsVendor;
     @Column(name = "SMS_RESPONSE_ID")
     private String smsResponse;
+    @Column(name = "MAIL_STATUS")
+    private String mailStatus;
+    @Column(name = "SMS_EMAIL")
+    private String smsEmail;
     @Column(name = "CREATED_BY")
     private String createdBy;
     @Column(name = "CREATED_ON")

@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface VendorSmsLogRepository extends JpaRepository<VendorSmsLog, Long> {
 
     Optional<VendorSmsLog> findTop1BySmsMobileAndStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(String mobile, String status, String smsType, LocalDateTime expiryTime);
+    Optional<VendorSmsLog> findTop1BySmsEmailAndMailStatusAndSmsTypeAndCreatedOnGreaterThanOrderBySmsIdDesc(String email, String mailStatus, String smsType, LocalDateTime expiryTime);
 }

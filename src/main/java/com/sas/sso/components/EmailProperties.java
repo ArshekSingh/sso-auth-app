@@ -10,30 +10,21 @@ import org.springframework.stereotype.Component;
 @Setter
 public class EmailProperties {
 
-    @Value("${spring.recipient.email}")
-    private String recipient;
-
-    @Value("${spring.mail.from}")
+	@Value("${spring.mail.username}")
     private String sender;
 
     @Value("${spring.mail.password}")
     private String password;
 
-    @Value("${spring.mail.smtp.host}")
+    @Value("${spring.mail.host}")
     private String host;
 
-    @Value("${spring.mail.smtp.port}")
+    @Value("${spring.mail.port}")
     private String port;
 
-    @Value("${spring.mail.smtp.ssl.enable}")
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
     private String enable;
 
-    @Value("${spring.mail.smtp.auth}")
+    @Value("${spring.mail.properties.mail.smtp.auth}")
     private String auth;
-
-    @Value("${spring.recipient.cc.email}")
-    private String cc;
-
-    @Value("${spring.recipient.bcc.email}")
-    private String bcc;
 }
