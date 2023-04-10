@@ -70,7 +70,11 @@ public class CookieFilter implements Filter {
 				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
 			}
-		} else {
+		} else if(!httpServletRequest.getRequestURI().contains("/api/"))
+		{
+			chain.doFilter(httpServletRequest, httpServletResponse);
+		}
+		else {
 			log.warn("token does not exist in system");
 			httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
 			response.getWriter().write(objectMapper.writeValueAsString(
