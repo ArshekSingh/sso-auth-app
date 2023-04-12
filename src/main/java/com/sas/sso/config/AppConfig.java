@@ -65,30 +65,26 @@ public class AppConfig implements WebMvcConfigurer {
 	@Bean
 	public FilterRegistrationBean<CorsFilter> corsFilter() {
 
-	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-	    CorsConfiguration config = new CorsConfiguration();
+		CorsConfiguration config = new CorsConfiguration();
 
-	    config.setAllowCredentials(true);
+		config.setAllowCredentials(true);
 
-	    
-	    allowedOrigins.parallelStream().forEach(str->config.addAllowedOrigin(str));
-	    config.addAllowedOrigin("https://localhost:3000");
-	    config.addAllowedOrigin("http://localhost:3000");
+		allowedOrigins.parallelStream().forEach(str -> config.addAllowedOrigin(str));
+		config.addAllowedHeader("*");
 
-	    config.addAllowedHeader("*");
+		config.addAllowedMethod("*");
 
-	    config.addAllowedMethod("*");
+		source.registerCorsConfiguration("/**", config);
 
-	    source.registerCorsConfiguration("/**", config);
+		FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<CorsFilter>(
 
-	    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<CorsFilter>(
+				new CorsFilter(source));
 
-	            new CorsFilter(source));
+		bean.setOrder(0);
 
-	    bean.setOrder(0);
-
-	    return bean;
+		return bean;
 
 	}
 }
