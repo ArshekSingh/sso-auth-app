@@ -79,14 +79,14 @@ public class AppConfig implements WebMvcConfigurer {
 						"x-csrf-token",
 						"x-requested-with",
 						"Access-Control-Allow-Origin","Access-Control-Allow-Headers","Access-Control-Allow-Credentials")
-				.allowedOrigins("http://localhost:3000/","https://7036-13-232-90-28.ngrok-free.app").maxAge(4800);
+				.allowedOrigins("http://localhost:3000/","https://api-auth.parallelcap.in/").maxAge(4800);
 	}
 
 	@Bean
 	protected CorsConfigurationSource corsConfigurationSource() {
 		final CorsConfiguration configuration = new CorsConfiguration();
 
-		configuration.setAllowedOrigins(List.of("http://localhost:3000","https://7036-13-232-90-28.ngrok-free.app"));
+		configuration.setAllowedOrigins(List.of("http://localhost:3000","https://api-auth.parallelcap.in/"));
 		configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
 
 		// NOTE: setAllowCredentials(true) is important,
