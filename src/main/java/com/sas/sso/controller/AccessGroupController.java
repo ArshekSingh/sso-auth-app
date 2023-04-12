@@ -60,6 +60,7 @@ public class AccessGroupController {
 
 	}
 
+//	@CrossOrigin(origins = "http://localhost:3000")
 	@GetMapping("/api/company_details")
 	public Response getCompanyDetails() {
 

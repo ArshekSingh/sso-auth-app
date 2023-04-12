@@ -11,7 +11,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.sas.sso.constants.RestMappingConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -53,31 +55,36 @@ public class CookieFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 		HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-		TokenSession tokenFromCookie = userUtils.getTokenSession();
-		if (httpServletRequest.getRequestURI().contains("/api/") && tokenFromCookie != null) {
-
-			log.info("Token Found in session registry");
-			Optional<UserSession> userSessionOptional = userRedisRepository.findById(tokenFromCookie.getUserId());
-			if (userSessionOptional.isPresent()
-					&& jwtService.isTokenValid(tokenFromCookie.getToken(), userSessionOptional.get())) {
-				log.info("token and user valid , passing to controller");
-				chain.doFilter(httpServletRequest, httpServletResponse);
-			} else {
-				log.warn("token and user invalid , returning with 401");
-				httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-				response.getWriter().write(objectMapper.writeValueAsString(
-						new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
-				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
+		boolean isValidRequest =true;
+		System.out.println("Request Method "+httpServletRequest.getMethod() +" RequestURI : "+httpServletRequest.getRequestURI());
+		if (httpServletRequest.getRequestURI().contains("/api/")  &&!"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+			TokenSession tokenFromCookie = userUtils.getTokenSession();
+			
+			if(tokenFromCookie!=null ) {
+				Optional<UserSession> userSessionOptional = userRedisRepository.findById(tokenFromCookie.getUserId());
+				if (userSessionOptional.isPresent()&& jwtService.isTokenValid(tokenFromCookie.getToken(), userSessionOptional.get())) {
+					log.info("token and user valid , passing to controller");
+					
+				} else {
+					isValidRequest=false;
+				}
 			}
-		} else {
-			log.warn("token does not exist in system");
-			httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-			response.getWriter().write(objectMapper.writeValueAsString(
-					new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
-			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		}
-
+		if (!"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod()) && isValidRequest) {
+			chain.doFilter(httpServletRequest, httpServletResponse);
+		}
+		else {
+			if (httpServletRequest.getRequestURI().contains("/api/") && !"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+				httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+				response.getWriter().write(objectMapper.writeValueAsString(new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
+				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			} else {
+				httpServletResponse.setStatus(HttpStatus.OK.value());
+				response.getWriter().write(objectMapper.writeValueAsString(new Response(HttpStatus.OK.getReasonPhrase(), HttpStatus.OK)));
+				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			}
+			
+		}
 	}
 
 }
