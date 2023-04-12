@@ -23,9 +23,11 @@ import com.sas.sso.intercepter.RequestInterceptor;
 import com.sas.sso.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class AppConfig implements WebMvcConfigurer {
 
 	private final UserRepository repository;
@@ -70,17 +72,18 @@ public class AppConfig implements WebMvcConfigurer {
 		CorsConfiguration config = new CorsConfiguration();
 
 		config.setAllowCredentials(true);
-
-		allowedOrigins.parallelStream().forEach(str -> config.addAllowedOrigin(str));
+		
+		log.info("Configuring origins to be allowed . . .");
+		
+		allowedOrigins.parallelStream().forEach(config::addAllowedOrigin);
+		
 		config.addAllowedHeader("*");
 
 		config.addAllowedMethod("*");
 
 		source.registerCorsConfiguration("/**", config);
 
-		FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<CorsFilter>(
-
-				new CorsFilter(source));
+		FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
 
 		bean.setOrder(0);
 
