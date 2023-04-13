@@ -56,7 +56,7 @@ public class CookieFilter implements Filter {
 		HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 		HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 		boolean isValidRequest =true;
-		System.out.println("Request Method "+httpServletRequest.getMethod() +" RequestURI : "+httpServletRequest.getRequestURI());
+		
 		if (httpServletRequest.getRequestURI().contains("/api/")  &&!"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
 			TokenSession tokenFromCookie = userUtils.getTokenSession();
 			
