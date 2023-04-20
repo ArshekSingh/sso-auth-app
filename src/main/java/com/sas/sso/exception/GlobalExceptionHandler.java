@@ -19,6 +19,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import com.sas.sso.dto.Response;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.impl.crypto.JwtSignatureValidator;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -109,5 +112,21 @@ public class GlobalExceptionHandler {
 		log.error("DataIntegrityViolationException occurred ", ex);
 		return new ResponseEntity<>(new Response("DataIntegrityViolationException ".concat(ex.getMessage()),
 				HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(value = ExpiredJwtException.class)
+	@ResponseBody
+	public ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex) {
+		log.error("ExpiredJwtException occurred ", ex);
+		return new ResponseEntity<>(new Response("ExpiredJwtException ".concat(ex.getMessage()),
+				HttpStatus.UNAUTHORIZED), HttpStatus.UNAUTHORIZED);
+	}
+	
+	@ExceptionHandler(value = SignatureException.class)
+	@ResponseBody
+	public ResponseEntity<Object> handleSignatureException(SignatureException ex) {
+		log.error("SignatureException occurred ", ex);
+		return new ResponseEntity<>(new Response("SignatureException ".concat(ex.getMessage()),
+				HttpStatus.UNAUTHORIZED), HttpStatus.UNAUTHORIZED);
 	}
 }

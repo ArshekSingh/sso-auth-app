@@ -24,7 +24,8 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf().disable().authorizeHttpRequests().antMatchers("/auth/**", "/api/**", "/static/**").permitAll()
+		http.csrf().disable()
+		.authorizeHttpRequests().antMatchers( "/auth/**","/static/**","/api/**").permitAll()
 				.anyRequest().authenticated().and().sessionManagement()
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 				.authenticationProvider(authenticationProvider)
@@ -34,5 +35,7 @@ public class SecurityConfig {
 				.logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext());
 		return http.build();
 	}
+
+
 
 }

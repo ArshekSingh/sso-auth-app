@@ -1,5 +1,6 @@
 package com.sas.sso.controller;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +61,10 @@ public class AccessGroupController {
 
 	}
 
+//	@CrossOrigin(origins = "http://localhost:3000")
 	@GetMapping("/api/company_details")
-	public Response getCompanyDetails() {
-
+	public Response getCompanyDetails(HttpServletResponse response) {
+		response.setHeader("Acess-Control-Allow-Credentials", "true");
 		return accessGroupService.getCompanyDetails();
 	}
 

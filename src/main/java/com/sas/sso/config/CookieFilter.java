@@ -11,7 +11,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.sas.sso.constants.RestMappingConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,9 @@ import com.sas.sso.repository.UserRedisRepository;
 import com.sas.sso.serviceimpl.JwtService;
 import com.sas.sso.utils.UserUtils;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,35 +58,67 @@ public class CookieFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 		HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-		TokenSession tokenFromCookie = userUtils.getTokenSession();
-		if (httpServletRequest.getRequestURI().contains("/api/") && tokenFromCookie != null) {
+		boolean isValidRequest = true;
+		try {
+			if (httpServletRequest.getRequestURI().contains("/api/")
+					&& !"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+				TokenSession tokenFromCookie = userUtils.getTokenSession();
 
-			log.info("Token Found in session registry");
-			Optional<UserSession> userSessionOptional = userRedisRepository.findById(tokenFromCookie.getUserId());
-			if (userSessionOptional.isPresent()
-					&& jwtService.isTokenValid(tokenFromCookie.getToken(), userSessionOptional.get())) {
-				log.info("token and user valid , passing to controller");
+				if (tokenFromCookie != null) {
+					Optional<UserSession> userSessionOptional = userRedisRepository
+							.findById(tokenFromCookie.getUserId());
+					if (userSessionOptional.isPresent()
+							&& jwtService.isTokenValid(tokenFromCookie.getToken(), userSessionOptional.get())) {
+						log.info("token and user valid , passing to controller");
+
+					} else {
+						isValidRequest = false;
+					}
+				}
+				else {
+					isValidRequest = false;
+				}
+			}
+			if (!"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod()) && isValidRequest) {
 				chain.doFilter(httpServletRequest, httpServletResponse);
 			} else {
-				log.warn("token and user invalid , returning with 401");
-				httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-				response.getWriter().write(objectMapper.writeValueAsString(
-						new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
-				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+				if (httpServletRequest.getRequestURI().contains("/api/")
+						&& !"OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+					httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+					response.getWriter().write(objectMapper.writeValueAsString(
+							new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
+					response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+					setCommonHeaderInResponse(httpServletRequest, httpServletResponse);
+				} else {
+					httpServletResponse.setStatus(HttpStatus.OK.value());
+					response.getWriter().write(objectMapper
+							.writeValueAsString(new Response(HttpStatus.OK.getReasonPhrase(), HttpStatus.OK)));
+					response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+				}
 
 			}
-		} else if(!httpServletRequest.getRequestURI().contains("/api/"))
-		{
-			chain.doFilter(httpServletRequest, httpServletResponse);
-		}
-		else {
-			log.warn("token does not exist in system");
+		} catch (ExpiredJwtException | SignatureException e) {
 			httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-			response.getWriter().write(objectMapper.writeValueAsString(
-					new Response(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED)));
-			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			httpServletResponse.getWriter()
+					.write(objectMapper.writeValueAsString(new Response("Jwt Expired or malformed", HttpStatus.UNAUTHORIZED)));
+			httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			setCommonHeaderInResponse(httpServletRequest, httpServletResponse);
+		} catch (Exception e) {
+			httpServletResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			httpServletResponse.getWriter().write(
+					objectMapper.writeValueAsString(new Response(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)));
+			httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			setCommonHeaderInResponse(httpServletRequest, httpServletResponse);
 		}
+	}
 
+	private void setCommonHeaderInResponse(HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse) {
+		httpServletResponse.setHeader("Access-Control-Allow-Origin", httpServletRequest.getHeader("Origin"));
+		httpServletResponse.setHeader("Access-Control-Allow-Credentials", "true");
+		httpServletResponse.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
+		httpServletResponse.setHeader("Access-Control-Max-Age", "3600");
+		httpServletResponse.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, remember-me");
 	}
 
 }

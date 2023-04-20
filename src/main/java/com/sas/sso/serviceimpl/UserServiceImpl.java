@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService , Constant {
 		cal.add(Calendar.SECOND, ONE_DAY_IN_SECONDS);
 		String cookieLifeTime = cookieExpireFormat.format(cal.getTime());
 		response.setHeader(HttpHeaders.SET_COOKIE,
-				"token=".concat(tokenSession.getToken()).concat("; Path=/; Expires=" + cookieLifeTime + ";"));
+				"token=".concat(tokenSession.getToken()).concat("; Path=/; Expires=" + cookieLifeTime +"; ").concat("SameSite=None; Secure;"));
 	}
 
 	@Override
